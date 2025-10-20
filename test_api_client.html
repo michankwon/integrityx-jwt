@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Documents API Client Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Loan Documents API Client Test</h1>
+        <p>This page tests the loan documents API client functions with the backend server.</p>
+
+        <!-- Test 1: Search Loan Documents -->
+        <div class="test-section">
+            <h3>1. Search Loan Documents</h3>
+            <div class="form-group">
+                <label>Borrower Name:</label>
+                <input type="text" id="searchBorrowerName" placeholder="Enter borrower name">
+            </div>
+            <div class="form-group">
+                <label>Loan ID:</label>
+                <input type="text" id="searchLoanId" placeholder="Enter loan ID">
+            </div>
+            <div class="form-group">
+                <label>Limit:</label>
+                <input type="number" id="searchLimit" value="10" min="1" max="100">
+            </div>
+            <button onclick="testSearchLoanDocuments()">Search Documents</button>
+            <div id="searchResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 2: Get Borrower Info -->
+        <div class="test-section">
+            <h3>2. Get Borrower Information</h3>
+            <div class="form-group">
+                <label>Artifact ID:</label>
+                <input type="text" id="borrowerArtifactId" placeholder="Enter artifact ID">
+            </div>
+            <button onclick="testGetBorrowerInfo()">Get Borrower Info</button>
+            <div id="borrowerResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 3: Get Audit Trail -->
+        <div class="test-section">
+            <h3>3. Get Audit Trail</h3>
+            <div class="form-group">
+                <label>Artifact ID:</label>
+                <input type="text" id="auditArtifactId" placeholder="Enter artifact ID">
+            </div>
+            <button onclick="testGetAuditTrail()">Get Audit Trail</button>
+            <div id="auditResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 4: Verify Document -->
+        <div class="test-section">
+            <h3>4. Verify Document</h3>
+            <div class="form-group">
+                <label>Artifact ID:</label>
+                <input type="text" id="verifyArtifactId" placeholder="Enter artifact ID">
+            </div>
+            <div class="form-group">
+                <label>Hash to Verify:</label>
+                <input type="text" id="verifyHash" placeholder="Enter hash to verify">
+            </div>
+            <button onclick="testVerifyDocument()">Verify Document</button>
+            <div id="verifyResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 5: Get Loan Document -->
+        <div class="test-section">
+            <h3>5. Get Loan Document</h3>
+            <div class="form-group">
+                <label>Artifact ID:</label>
+                <input type="text" id="documentArtifactId" placeholder="Enter artifact ID">
+            </div>
+            <button onclick="testGetLoanDocument()">Get Document</button>
+            <div id="documentResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Test 6: Health Check -->
+        <div class="test-section">
+            <h3>6. Backend Health Check</h3>
+            <button onclick="testHealthCheck()">Check Backend Health</button>
+            <div id="healthResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // Helper function to display results
+        function displayResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Test 1: Search Loan Documents
+        async function testSearchLoanDocuments() {
+            try {
+                const borrowerName = document.getElementById('searchBorrowerName').value;
+                const loanId = document.getElementById('searchLoanId').value;
+                const limit = document.getElementById('searchLimit').value;
+
+                const params = new URLSearchParams();
+                if (borrowerName) params.append('borrower_name', borrowerName);
+                if (loanId) params.append('loan_id', loanId);
+                if (limit) params.append('limit', limit);
+
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/search?${params}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('searchResult', data);
+                } else {
+                    displayResult('searchResult', data, true);
+                }
+            } catch (error) {
+                displayResult('searchResult', { error: error.message }, true);
+            }
+        }
+
+        // Test 2: Get Borrower Info
+        async function testGetBorrowerInfo() {
+            try {
+                const artifactId = document.getElementById('borrowerArtifactId').value;
+                if (!artifactId) {
+                    displayResult('borrowerResult', { error: 'Please enter an artifact ID' }, true);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/${artifactId}/borrower`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('borrowerResult', data);
+                } else {
+                    displayResult('borrowerResult', data, true);
+                }
+            } catch (error) {
+                displayResult('borrowerResult', { error: error.message }, true);
+            }
+        }
+
+        // Test 3: Get Audit Trail
+        async function testGetAuditTrail() {
+            try {
+                const artifactId = document.getElementById('auditArtifactId').value;
+                if (!artifactId) {
+                    displayResult('auditResult', { error: 'Please enter an artifact ID' }, true);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/${artifactId}/audit-trail`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('auditResult', data);
+                } else {
+                    displayResult('auditResult', data, true);
+                }
+            } catch (error) {
+                displayResult('auditResult', { error: error.message }, true);
+            }
+        }
+
+        // Test 4: Verify Document
+        async function testVerifyDocument() {
+            try {
+                const artifactId = document.getElementById('verifyArtifactId').value;
+                const hash = document.getElementById('verifyHash').value;
+                
+                if (!artifactId || !hash) {
+                    displayResult('verifyResult', { error: 'Please enter both artifact ID and hash' }, true);
+                    return;
+                }
+
+                // First get the artifact to find the ETID
+                const artifactResponse = await fetch(`${API_BASE_URL}/api/artifacts/${artifactId}`);
+                const artifactData = await artifactResponse.json();
+                
+                if (!artifactResponse.ok) {
+                    displayResult('verifyResult', artifactData, true);
+                    return;
+                }
+
+                const verifyRequest = {
+                    etid: artifactData.data.etid,
+                    payloadHash: hash
+                };
+
+                const response = await fetch(`${API_BASE_URL}/api/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(verifyRequest)
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('verifyResult', data);
+                } else {
+                    displayResult('verifyResult', data, true);
+                }
+            } catch (error) {
+                displayResult('verifyResult', { error: error.message }, true);
+            }
+        }
+
+        // Test 5: Get Loan Document
+        async function testGetLoanDocument() {
+            try {
+                const artifactId = document.getElementById('documentArtifactId').value;
+                if (!artifactId) {
+                    displayResult('documentResult', { error: 'Please enter an artifact ID' }, true);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/artifacts/${artifactId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('documentResult', data);
+                } else {
+                    displayResult('documentResult', data, true);
+                }
+            } catch (error) {
+                displayResult('documentResult', { error: error.message }, true);
+            }
+        }
+
+        // Test 6: Health Check
+        async function testHealthCheck() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('healthResult', data);
+                } else {
+                    displayResult('healthResult', data, true);
+                }
+            } catch (error) {
+                displayResult('healthResult', { error: error.message }, true);
+            }
+        }
+
+        // Auto-populate with example data
+        window.onload = function() {
+            // Set some example values for testing
+            document.getElementById('searchBorrowerName').value = 'John';
+            document.getElementById('borrowerArtifactId').value = '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+            document.getElementById('auditArtifactId').value = '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+            document.getElementById('verifyArtifactId').value = '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+            document.getElementById('verifyHash').value = 'b3d3114514a993b4f958d5095782782473a6758a5fa435ac65eeeab6a5ec96a7';
+            document.getElementById('documentArtifactId').value = '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+        };
+    </script>
+</body>
+</html>
+

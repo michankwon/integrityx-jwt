@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attestations Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Attestations API Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Data</h2>
+        <p>This test assumes you have a running backend server and at least one artifact in the database.</p>
+        <p>You can create an artifact by uploading a document through the main application first.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>1. Create Test Attestation</h2>
+        <button class="test-button" onclick="createAttestation()">Create Attestation</button>
+        <div id="create-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. List Attestations</h2>
+        <input type="text" id="artifact-id" placeholder="Enter Artifact ID" style="width: 300px; padding: 8px; margin-right: 10px;">
+        <button class="test-button" onclick="listAttestations()">List Attestations</button>
+        <div id="list-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Create Provenance Link</h2>
+        <input type="text" id="parent-id" placeholder="Parent Artifact ID" style="width: 200px; padding: 8px; margin-right: 10px;">
+        <input type="text" id="child-id" placeholder="Child Artifact ID" style="width: 200px; padding: 8px; margin-right: 10px;">
+        <button class="test-button" onclick="createProvenanceLink()">Create Link</button>
+        <div id="provenance-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Generate Disclosure Pack</h2>
+        <input type="text" id="disclosure-id" placeholder="Artifact ID" style="width: 300px; padding: 8px; margin-right: 10px;">
+        <button class="test-button" onclick="generateDisclosurePack()">Generate Pack</button>
+        <div id="disclosure-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        async function createAttestation() {
+            const resultDiv = document.getElementById('create-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Creating attestation...';
+            
+            try {
+                // First, let's try to get an existing artifact ID
+                const response = await fetch(`${API_BASE}/api/artifacts`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch artifacts: ${response.statusText}`);
+                }
+                
+                const artifactsResponse = await response.json();
+                if (!artifactsResponse.ok || !artifactsResponse.data || artifactsResponse.data.length === 0) {
+                    throw new Error('No artifacts found. Please create an artifact first.');
+                }
+                
+                const artifactId = artifactsResponse.data[0].id;
+                
+                const attestationData = {
+                    artifactId: artifactId,
+                    etid: "ATTESTATION_ETID_001",
+                    kind: "qc_check",
+                    issuedBy: "test_user",
+                    details: {
+                        score: 95,
+                        notes: "Quality check passed with high confidence",
+                        checker: "automated_system",
+                        timestamp: new Date().toISOString()
+                    }
+                };
+                
+                const createResponse = await fetch(`${API_BASE}/api/attestations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(attestationData)
+                });
+                
+                if (!createResponse.ok) {
+                    throw new Error(`Failed to create attestation: ${createResponse.statusText}`);
+                }
+                
+                const result = await createResponse.json();
+                
+                if (result.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Attestation created successfully!\n\nID: ${result.data.id}\nArtifact ID: ${result.data.artifactId}\nKind: ${result.data.kind}\nIssued By: ${result.data.issuedBy}\nCreated At: ${result.data.createdAt}`;
+                    
+                    // Auto-fill the artifact ID for other tests
+                    document.getElementById('artifact-id').value = artifactId;
+                } else {
+                    throw new Error(result.error?.message || 'Failed to create attestation');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function listAttestations() {
+            const artifactId = document.getElementById('artifact-id').value;
+            const resultDiv = document.getElementById('list-result');
+            
+            if (!artifactId) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter an artifact ID';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Fetching attestations...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/attestations?artifactId=${encodeURIComponent(artifactId)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch attestations: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Found ${result.data.attestations.length} attestations:\n\n${JSON.stringify(result.data, null, 2)}`;
+                } else {
+                    throw new Error(result.error?.message || 'Failed to fetch attestations');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function createProvenanceLink() {
+            const parentId = document.getElementById('parent-id').value;
+            const childId = document.getElementById('child-id').value;
+            const resultDiv = document.getElementById('provenance-result');
+            
+            if (!parentId || !childId) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter both parent and child artifact IDs';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Creating provenance link...';
+            
+            try {
+                const linkData = {
+                    parentArtifactId: parentId,
+                    childArtifactId: childId,
+                    relation: "contains"
+                };
+                
+                const response = await fetch(`${API_BASE}/api/provenance/link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(linkData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to create provenance link: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Provenance link created successfully!\n\nID: ${result.data.id}\nParent: ${result.data.parentArtifactId}\nChild: ${result.data.childArtifactId}\nRelation: ${result.data.relation}\nCreated At: ${result.data.createdAt}`;
+                } else {
+                    throw new Error(result.error?.message || 'Failed to create provenance link');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function generateDisclosurePack() {
+            const artifactId = document.getElementById('disclosure-id').value;
+            const resultDiv = document.getElementById('disclosure-result');
+            
+            if (!artifactId) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter an artifact ID';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Generating disclosure pack...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/disclosure-pack?id=${encodeURIComponent(artifactId)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to generate disclosure pack: ${response.statusText}`);
+                }
+                
+                // Check if it's a ZIP file
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/zip')) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Disclosure pack generated successfully!\n\nContent-Type: ${contentType}\nContent-Length: ${response.headers.get('content-length') || 'Unknown'}\n\nThe ZIP file should be downloaded automatically.`;
+                    
+                    // Create a download link
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `disclosure_${artifactId}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    throw new Error('Response is not a ZIP file');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
+

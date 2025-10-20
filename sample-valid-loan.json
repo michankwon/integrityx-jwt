@@ -1,0 +1,22 @@
+{
+  "loanId": "LOAN_VALID_001",
+  "amount": 250000,
+  "rate": 6.5,
+  "term": 360,
+  "borrower": {
+    "name": "John Smith",
+    "email": "john.smith@email.com",
+    "phone": "+1-555-0123",
+    "ssn": "***-**-1234"
+  },
+  "property": {
+    "address": "456 Oak Avenue, Brooklyn, NY 11201",
+    "purchasePrice": 400000,
+    "appraisedValue": 395000
+  },
+  "loanType": "conventional",
+  "purpose": "purchase",
+  "status": "Approved",
+  "applicationDate": "2024-01-15",
+  "closingDate": "2024-02-15"
+}

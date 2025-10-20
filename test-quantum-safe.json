@@ -1,0 +1,36 @@
+{
+  "loanId": "QUANTUM_SAFE_TEST_001",
+  "documentType": "loan_application",
+  "borrower": {
+    "name": "Alice Quantum",
+    "email": "alice.quantum@example.com",
+    "phone": "+1-555-9999",
+    "dateOfBirth": "1985-12-25",
+    "address": {
+      "street": "123 Quantum Street",
+      "city": "Quantum City",
+      "state": "QC",
+      "zipCode": "99999",
+      "country": "US"
+    },
+    "ssn": "***-**-9999",
+    "id_type": "passport",
+    "id_last4": "9999",
+    "employment_status": "employed",
+    "annual_income": 100000,
+    "co_borrower_name": "Bob Quantum"
+  },
+  "loanDetails": {
+    "amount": 500000,
+    "interestRate": 4.5,
+    "termMonths": 360
+  },
+  "additional_notes": "Test loan document for quantum-safe cryptography implementation. This document will be sealed using quantum-resistant algorithms to protect against future quantum computing attacks.",
+  "metadata": {
+    "lender": "Quantum Bank",
+    "loanOfficer": "Quantum Officer",
+    "security_level": "quantum_safe",
+    "quantum_resistance": "high"
+  }
+}
+

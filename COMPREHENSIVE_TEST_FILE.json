@@ -1,0 +1,234 @@
+{
+  "loan_id": "COMPREHENSIVE_TEST_001",
+  "document_type": "loan_application",
+  "loan_amount": 750000,
+  "borrower_name": "Alice Johnson",
+  "additional_notes": "Comprehensive test file for IntegrityX quantum-safe document sealing with all updated fields including borrower information, KYC data, and security features.",
+  "created_by": "test@integrityx.com",
+  "borrower": {
+    "full_name": "Alice Johnson",
+    "date_of_birth": "1985-06-15",
+    "email": "alice.johnson@example.com",
+    "phone": "+1-555-123-4567",
+    "address": {
+      "street": "123 Main Street",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip_code": "94102",
+      "country": "US"
+    },
+    "ssn_last4": "1234",
+    "id_type": "passport",
+    "id_last4": "5678",
+    "employment_status": "employed",
+    "annual_income": 150000,
+    "co_borrower_name": "Bob Johnson",
+    "is_sealed": false,
+    "walacor_tx_id": "",
+    "seal_timestamp": ""
+  },
+  "kyc_information": {
+    "personal_info": {
+      "full_legal_name": "Alice Johnson",
+      "date_of_birth": "1985-06-15",
+      "phone_number": "+1-555-123-4567",
+      "email_address": "alice.johnson@example.com"
+    },
+    "address_info": {
+      "street_address_line_1": "123 Main Street",
+      "street_address_line_2": "Apt 4B",
+      "city": "San Francisco",
+      "state_province": "CA",
+      "postal_zip_code": "94102",
+      "country": "US"
+    },
+    "identification_info": {
+      "citizenship_country": "US",
+      "identification_type": "passport",
+      "identification_number": "A12345678",
+      "id_issuing_country": "US"
+    },
+    "financial_info": {
+      "source_of_funds": "Employment Income",
+      "purpose_of_loan": "Purchase of primary residence for family of four. This loan will help us secure a stable home in a good school district for our children's education.",
+      "expected_monthly_transaction_volume": 5000,
+      "expected_number_of_monthly_transactions": 15
+    },
+    "compliance_screening": {
+      "is_pep": false,
+      "pep_details": ""
+    },
+    "identity_documents": {
+      "government_id_uploaded": true,
+      "proof_of_address_uploaded": true
+    }
+  },
+  "security_features": {
+    "quantum_safe_enabled": true,
+    "maximum_security_enabled": false,
+    "standard_security_enabled": false,
+    "encryption_level": "quantum_safe",
+    "algorithms_used": [
+      "SHAKE256",
+      "BLAKE3", 
+      "SHA3-512",
+      "Dilithium2"
+    ]
+  },
+  "document_metadata": {
+    "file_name": "comprehensive_test_loan_application.pdf",
+    "file_type": "application/pdf",
+    "file_size": 2048576,
+    "upload_timestamp": "2024-10-15T10:30:00Z",
+    "content_hash": "sha256:abc123def456...",
+    "mime_type": "application/pdf",
+    "pages": 15,
+    "language": "en-US"
+  },
+  "loan_details": {
+    "loan_type": "conventional_mortgage",
+    "property_type": "single_family_residence",
+    "property_address": "456 Oak Avenue, San Francisco, CA 94103",
+    "purchase_price": 950000,
+    "down_payment": 200000,
+    "loan_to_value_ratio": 0.789,
+    "interest_rate": 6.5,
+    "loan_term_months": 360,
+    "monthly_payment": 4740.69,
+    "closing_date": "2024-12-15"
+  },
+  "financial_information": {
+    "borrower_income": {
+      "base_salary": 120000,
+      "bonus": 15000,
+      "overtime": 5000,
+      "commission": 10000,
+      "total_annual_income": 150000
+    },
+    "co_borrower_income": {
+      "base_salary": 80000,
+      "bonus": 5000,
+      "total_annual_income": 85000
+    },
+    "assets": {
+      "checking_account": 25000,
+      "savings_account": 75000,
+      "investment_accounts": 100000,
+      "retirement_accounts": 150000,
+      "total_liquid_assets": 350000
+    },
+    "liabilities": {
+      "credit_card_debt": 5000,
+      "auto_loan_balance": 15000,
+      "student_loan_balance": 25000,
+      "other_debt": 0,
+      "total_monthly_debt_payments": 1200
+    }
+  },
+  "employment_information": {
+    "borrower_employment": {
+      "employer_name": "Tech Solutions Inc",
+      "job_title": "Senior Software Engineer",
+      "employment_length_years": 5,
+      "employment_length_months": 3,
+      "employment_type": "full_time",
+      "employer_address": "789 Tech Street, San Francisco, CA 94105"
+    },
+    "co_borrower_employment": {
+      "employer_name": "Marketing Pro LLC",
+      "job_title": "Marketing Manager",
+      "employment_length_years": 3,
+      "employment_length_months": 8,
+      "employment_type": "full_time",
+      "employer_address": "321 Business Ave, San Francisco, CA 94107"
+    }
+  },
+  "property_information": {
+    "property_type": "single_family_residence",
+    "property_use": "primary_residence",
+    "property_address": "456 Oak Avenue, San Francisco, CA 94103",
+    "year_built": 1995,
+    "square_footage": 2200,
+    "bedrooms": 4,
+    "bathrooms": 2.5,
+    "lot_size": 0.25,
+    "property_taxes_annual": 12000,
+    "homeowners_insurance_annual": 2400,
+    "hoa_fees_monthly": 150
+  },
+  "insurance_information": {
+    "homeowners_insurance": {
+      "provider": "State Farm Insurance",
+      "policy_number": "SF123456789",
+      "coverage_amount": 950000,
+      "deductible": 2500,
+      "annual_premium": 2400
+    },
+    "title_insurance": {
+      "provider": "First American Title",
+      "policy_number": "FA987654321",
+      "coverage_amount": 950000,
+      "premium": 2850
+    }
+  },
+  "compliance_information": {
+    "genius_act_compliance": {
+      "kyc_completed": true,
+      "aml_screening": true,
+      "sanctions_check": true,
+      "pep_screening": false,
+      "risk_assessment": "low"
+    },
+    "fair_lending": {
+      "ecoa_notice_provided": true,
+      "hmda_reporting": true,
+      "fair_housing_compliance": true
+    },
+    "privacy_compliance": {
+      "gdpr_compliant": true,
+      "ccpa_compliant": true,
+      "data_encryption": true,
+      "data_retention_policy": "7_years"
+    }
+  },
+  "verification_status": {
+    "income_verification": "verified",
+    "employment_verification": "verified",
+    "asset_verification": "verified",
+    "credit_check": "completed",
+    "appraisal": "ordered",
+    "title_search": "completed",
+    "flood_certificate": "ordered"
+  },
+  "audit_trail": {
+    "created_by": "test@integrityx.com",
+    "created_at": "2024-10-15T10:30:00Z",
+    "last_modified_by": "test@integrityx.com",
+    "last_modified_at": "2024-10-15T10:30:00Z",
+    "version": "1.0",
+    "status": "pending_review"
+  },
+  "testing_notes": {
+    "purpose": "Comprehensive test file for IntegrityX quantum-safe document sealing",
+    "test_scenarios": [
+      "Quantum-safe sealing with all borrower fields",
+      "KYC data collection and validation",
+      "Multi-level security testing",
+      "Auto-fill functionality testing",
+      "Data sanitization testing",
+      "Encryption and decryption testing",
+      "Blockchain sealing verification",
+      "Document verification flow",
+      "Audit trail generation",
+      "Compliance reporting"
+    ],
+    "expected_results": [
+      "Document successfully sealed with quantum-safe cryptography",
+      "All borrower information encrypted and stored",
+      "Walacor transaction ID generated",
+      "Complete audit trail created",
+      "Verification works correctly",
+      "All security features functioning"
+    ]
+  }
+}

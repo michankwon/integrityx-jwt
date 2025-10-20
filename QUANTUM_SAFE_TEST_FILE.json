@@ -1,0 +1,43 @@
+{
+  "loan_id": "QUANTUM_SAFE_TEST_001",
+  "document_type": "loan_application",
+  "loan_amount": 1000000,
+  "borrower_name": "Quantum Test User",
+  "additional_notes": "Test file specifically designed for quantum-safe document sealing with advanced security features and future-proof cryptography.",
+  "created_by": "quantum-test@integrityx.com",
+  "borrower": {
+    "full_name": "Quantum Test User",
+    "date_of_birth": "1988-03-22",
+    "email": "quantum.test@example.com",
+    "phone": "+1-555-000-0000",
+    "address": {
+      "street": "789 Quantum Lane",
+      "city": "Secure City",
+      "state": "CA",
+      "zip_code": "90210",
+      "country": "US"
+    },
+    "ssn_last4": "0000",
+    "id_type": "passport",
+    "id_last4": "0000",
+    "employment_status": "employed",
+    "annual_income": 200000,
+    "co_borrower_name": "Quantum Co-User",
+    "is_sealed": false,
+    "walacor_tx_id": "",
+    "seal_timestamp": ""
+  },
+  "quantum_safe_features": {
+    "enabled": true,
+    "algorithms": [
+      "SHAKE256",
+      "BLAKE3",
+      "SHA3-512",
+      "Dilithium2"
+    ],
+    "security_level": "quantum_safe",
+    "future_proof": true,
+    "nist_pqc_compliant": true
+  },
+  "test_purpose": "Verify quantum-safe cryptography implementation with real Walacor blockchain sealing"
+}

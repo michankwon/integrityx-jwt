@@ -1,0 +1,63 @@
+{
+  "loanId": "LOAN_2024_001",
+  "borrower": {
+    "name": "John Smith",
+    "email": "john.smith@email.com",
+    "phone": "+1-555-0123",
+    "address": {
+      "street": "123 Main Street",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
+      "country": "USA"
+    },
+    "ssn": "***-**-1234",
+    "dateOfBirth": "1985-06-15"
+  },
+  "loanDetails": {
+    "amount": 250000,
+    "interestRate": 6.5,
+    "termMonths": 360,
+    "loanType": "Conventional",
+    "purpose": "Purchase",
+    "propertyType": "Single Family"
+  },
+  "property": {
+    "address": "456 Oak Avenue",
+    "city": "Brooklyn",
+    "state": "NY",
+    "zipCode": "11201",
+    "purchasePrice": 400000,
+    "appraisedValue": 395000
+  },
+  "financials": {
+    "monthlyIncome": 8500,
+    "monthlyDebt": 1200,
+    "debtToIncomeRatio": 0.14,
+    "creditScore": 750,
+    "downPayment": 150000,
+    "loanToValueRatio": 0.625
+  },
+  "documents": {
+    "w2Forms": ["w2_2023.pdf", "w2_2022.pdf"],
+    "bankStatements": ["bank_statement_jan_2024.pdf"],
+    "taxReturns": ["tax_return_2023.pdf"],
+    "payStubs": ["paystub_jan_2024.pdf", "paystub_feb_2024.pdf"]
+  },
+  "timeline": {
+    "applicationDate": "2024-01-15",
+    "approvalDate": "2024-01-28",
+    "closingDate": "2024-02-15",
+    "fundingDate": "2024-02-16"
+  },
+  "metadata": {
+    "lender": "First National Bank",
+    "loanOfficer": "Sarah Johnson",
+    "processor": "Mike Chen",
+    "underwriter": "Lisa Rodriguez",
+    "complianceOfficer": "David Kim"
+  },
+  "status": "Approved",
+  "version": "1.0",
+  "lastUpdated": "2024-02-16T10:30:00Z"
+}

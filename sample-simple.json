@@ -1,0 +1,25 @@
+{
+  "documentType": "Financial Statement",
+  "company": "Acme Corporation",
+  "period": "Q4 2023",
+  "revenue": 1250000,
+  "expenses": 980000,
+  "netIncome": 270000,
+  "assets": 2500000,
+  "liabilities": 1200000,
+  "equity": 1300000,
+  "cashFlow": {
+    "operating": 320000,
+    "investing": -150000,
+    "financing": -50000
+  },
+  "ratios": {
+    "currentRatio": 2.1,
+    "debtToEquity": 0.92,
+    "returnOnEquity": 0.21
+  },
+  "auditor": "Deloitte & Associates",
+  "auditDate": "2024-01-15",
+  "preparedBy": "CFO - Jane Wilson",
+  "approvedBy": "CEO - Robert Brown"
+}

@@ -1,0 +1,18 @@
+{
+  "loanId": "LOAN_2024_001",
+  "amount": 250000,
+  "rate": 6.5,
+  "term": 360,
+  "borrower": {
+    "name": "John Smith",
+    "email": "john.smith@email.com",
+    "phone": "+1-555-0123"
+  },
+  "property": {
+    "address": "456 Oak Avenue, Brooklyn, NY 11201",
+    "purchasePrice": 400000
+  },
+  "loanType": "conventional",
+  "purpose": "purchase",
+  "status": "Approved"
+}

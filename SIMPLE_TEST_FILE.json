@@ -1,0 +1,30 @@
+{
+  "loan_id": "SIMPLE_TEST_001",
+  "document_type": "loan_application",
+  "loan_amount": 500000,
+  "borrower_name": "John Smith",
+  "additional_notes": "Simple test file for IntegrityX upload page testing with quantum-safe features.",
+  "created_by": "test@example.com",
+  "borrower": {
+    "full_name": "John Smith",
+    "date_of_birth": "1990-01-15",
+    "email": "john.smith@example.com",
+    "phone": "+1-555-987-6543",
+    "address": {
+      "street": "456 Elm Street",
+      "city": "New York",
+      "state": "NY",
+      "zip_code": "10001",
+      "country": "US"
+    },
+    "ssn_last4": "9876",
+    "id_type": "drivers_license",
+    "id_last4": "5432",
+    "employment_status": "employed",
+    "annual_income": 100000,
+    "co_borrower_name": "Jane Smith",
+    "is_sealed": false,
+    "walacor_tx_id": "",
+    "seal_timestamp": ""
+  }
+}

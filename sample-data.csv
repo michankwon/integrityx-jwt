@@ -1,0 +1,11 @@
+Date,Transaction_ID,Amount,Currency,Type,Description,Account_Number,Status
+2024-01-01,TXN001,1500.00,USD,Deposit,Salary Deposit,ACC123456,Completed
+2024-01-02,TXN002,-250.00,USD,Withdrawal,ATM Withdrawal,ACC123456,Completed
+2024-01-03,TXN003,75.50,USD,Payment,Online Purchase,ACC123456,Completed
+2024-01-04,TXN004,-1200.00,USD,Transfer,Monthly Rent,ACC123456,Completed
+2024-01-05,TXN005,500.00,USD,Deposit,Refund,ACC123456,Completed
+2024-01-06,TXN006,-85.25,USD,Payment,Grocery Store,ACC123456,Completed
+2024-01-07,TXN007,-45.00,USD,Payment,Gas Station,ACC123456,Completed
+2024-01-08,TXN008,200.00,USD,Deposit,Cash Deposit,ACC123456,Completed
+2024-01-09,TXN009,-300.00,USD,Payment,Insurance Premium,ACC123456,Completed
+2024-01-10,TXN010,-150.00,USD,Payment,Utility Bill,ACC123456,Completed

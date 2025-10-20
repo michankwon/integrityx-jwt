@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Verification Page Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .feature-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-verified {
+            background: #28a745;
+        }
+        .status-pending {
+            background: #ffc107;
+        }
+        .status-failed {
+            background: #dc3545;
+        }
+        .masked-data {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .crypto-proof {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .audit-timeline {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+        .audit-event {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .certificate {
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .qr-code {
+            width: 100px;
+            height: 100px;
+            background: #000;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Enhanced Verification Page Test</h1>
+        <p>This page demonstrates the enhanced verification features for complete proof of borrower data integrity.</p>
+
+        <!-- Feature Overview -->
+        <div class="test-section">
+            <h3>✨ Enhanced Features Overview</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">Document Verification Status</div>
+                    <p>✅ Hash Matches Blockchain</p>
+                    <p>✅ No Tampering Detected</p>
+                    <p>✅ Borrower Data Intact</p>
+                    <p>🕒 Sealed Date/Time</p>
+                    <p>🔗 Clickable Walacor TX ID</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Borrower Information (Masked)</div>
+                    <p>👤 Non-sensitive fields clearly shown</p>
+                    <p>🔒 Sensitive fields masked with ***</p>
+                    <p>ℹ️ Privacy tooltips</p>
+                    <p>🛡️ Encrypted data indicators</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Cryptographic Proof</div>
+                    <p>🌳 Merkle root display</p>
+                    <p>🔗 Block hash verification</p>
+                    <p>⛓️ Previous block hash</p>
+                    <p>✍️ Digital signature</p>
+                    <p>🔍 Verify Signature button</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Verification Certificate</div>
+                    <p>📄 Printable PDF certificate</p>
+                    <p>📱 QR code linking to proof</p>
+                    <p>🏛️ Signed by IntegrityX platform</p>
+                    <p>📅 Verification timestamp</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Audit Trail Viewer</div>
+                    <p>📊 Timeline view of events</p>
+                    <p>👥 Who uploaded, when sealed</p>
+                    <p>🔍 Who verified</p>
+                    <p>🎯 Visual timeline with icons</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Proof Bundle Download</div>
+                    <p>📦 ZIP with all components</p>
+                    <p>📄 proof.json</p>
+                    <p>📋 certificate.pdf</p>
+                    <p>📊 audit_trail.json</p>
+                    <p>👤 borrower_info.json (masked)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Verification Status Demo -->
+        <div class="test-section">
+            <h3>🛡️ Document Verification Status</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">Verification Results</div>
+                    <p><span class="status-indicator status-verified"></span>Hash Matches Blockchain</p>
+                    <p><span class="status-indicator status-verified"></span>No Tampering Detected</p>
+                    <p><span class="status-indicator status-verified"></span>Borrower Data Intact</p>
+                    <p><strong>Sealed:</strong> 2024-01-15 14:30:25 UTC</p>
+                    <p><strong>TX ID:</strong> <a href="#" onclick="copyToClipboard('TX_abc123def456')">TX_abc123def456</a></p>
+                </div>
+            </div>
+            <button onclick="testVerificationStatus()">Test Verification Status</button>
+            <div id="verificationResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Borrower Information Demo -->
+        <div class="test-section">
+            <h3>👤 Borrower Information (Masked)</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">Personal Information</div>
+                    <p><strong>Full Name:</strong> John Smith</p>
+                    <p><strong>Date of Birth:</strong> 1985-03-15</p>
+                    <p><strong>Email:</strong> <span class="masked-data">j***@email.com</span> 🔒</p>
+                    <p><strong>Phone:</strong> <span class="masked-data">***-***-1234</span> 🔒</p>
+                    <p><strong>Address:</strong> Anytown, CA</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Financial Information</div>
+                    <p><strong>Employment:</strong> Employed</p>
+                    <p><strong>Income Range:</strong> $50,000 - $75,000</p>
+                    <p><strong>Co-borrower:</strong> Jane Smith</p>
+                    <p><strong>SSN:</strong> <span class="masked-data">****-**-1234</span> 🔒</p>
+                    <p><strong>ID:</strong> <span class="masked-data">****-5678</span> 🔒</p>
+                </div>
+            </div>
+            <button onclick="testBorrowerInfo()">Test Borrower Information</button>
+            <div id="borrowerResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Cryptographic Proof Demo -->
+        <div class="test-section">
+            <h3>🔐 Cryptographic Proof Display</h3>
+            <div class="crypto-proof">
+                <h4>Blockchain Cryptographic Verification</h4>
+                <p><strong>Merkle Root:</strong> <code>0x1a2b3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890</code></p>
+                <p><strong>Block Hash:</strong> <code>0x9f8e7d6c5b4a392817060504030201009f8e7d6c5b4a39281706050403020100</code></p>
+                <p><strong>Previous Block Hash:</strong> <code>0x8e7d6c5b4a392817060504030201009f8e7d6c5b4a392817060504030201009f</code></p>
+                <p><strong>Digital Signature:</strong> <code>0x7d6c5b4a392817060504030201009f8e7d6c5b4a392817060504030201009f8e7d6c5b4a392817060504030201009f8e7d6c5b4a39281706050403020100</code></p>
+                <button onclick="testSignatureVerification()">🔍 Verify Signature</button>
+                <span id="signatureStatus"></span>
+            </div>
+            <div id="cryptoResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Verification Certificate Demo -->
+        <div class="test-section">
+            <h3>📄 Verification Certificate</h3>
+            <div class="certificate">
+                <h2>IntegrityX Verification Certificate</h2>
+                <p><strong>Document Hash:</strong> <code>a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456</code></p>
+                <p><strong>Seal Date:</strong> January 15, 2024 14:30:25 UTC</p>
+                <p><strong>Transaction ID:</strong> TX_abc123def456</p>
+                <p><strong>Verification Timestamp:</strong> January 15, 2024 15:45:10 UTC</p>
+                <p><strong>Borrower:</strong> John Smith</p>
+                <p><strong>Loan Amount:</strong> $150,000</p>
+                <div class="qr-code">QR CODE</div>
+                <p><strong>Platform Signature:</strong> IntegrityX_Platform_Signature_xyz789</p>
+                <button onclick="testCertificateGeneration()">📄 Generate Certificate</button>
+                <button onclick="testPDFDownload()">📥 Download PDF</button>
+            </div>
+            <div id="certificateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Audit Trail Demo -->
+        <div class="test-section">
+            <h3>📊 Audit Trail Viewer</h3>
+            <div class="audit-timeline">
+                <div class="audit-event">
+                    <strong>📄 Document Created</strong> - user_123<br>
+                    <small>2024-01-15 14:25:10 UTC</small>
+                </div>
+                <div class="audit-event">
+                    <strong>🔒 Blockchain Sealed</strong> - system<br>
+                    <small>2024-01-15 14:30:25 UTC</small>
+                </div>
+                <div class="audit-event">
+                    <strong>👁️ Borrower Data Accessed</strong> - admin_456<br>
+                    <small>2024-01-15 15:00:00 UTC</small>
+                </div>
+                <div class="audit-event">
+                    <strong>✅ Document Verified</strong> - verifier_789<br>
+                    <small>2024-01-15 15:45:10 UTC</small>
+                </div>
+            </div>
+            <button onclick="testAuditTrail()">📊 Load Audit Trail</button>
+            <div id="auditResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Proof Bundle Download Demo -->
+        <div class="test-section">
+            <h3>📦 Proof Bundle Download</h3>
+            <p>Download complete proof bundle containing:</p>
+            <ul>
+                <li><strong>proof.json</strong> - Cryptographic proof and verification status</li>
+                <li><strong>certificate.pdf</strong> - Official verification certificate</li>
+                <li><strong>audit_trail.json</strong> - Complete audit history</li>
+                <li><strong>borrower_info.json</strong> - Masked borrower information</li>
+            </ul>
+            <button onclick="testProofBundleDownload()">📦 Download Proof Bundle</button>
+            <div id="bundleResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- API Integration Test -->
+        <div class="test-section">
+            <h3>🔌 API Integration Test</h3>
+            <div style="margin: 15px 0;">
+                <label>Artifact ID: </label>
+                <input type="text" id="artifactIdInput" placeholder="Enter artifact ID" style="padding: 8px; width: 300px;">
+            </div>
+            <button onclick="testBorrowerInfoAPI()">👤 Test Borrower Info API</button>
+            <button onclick="testAuditTrailAPI()">📊 Test Audit Trail API</button>
+            <button onclick="testVerificationAPI()">🔍 Test Verification API</button>
+            <div id="apiResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // Helper function to display results
+        function displayResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard: ' + text);
+        }
+
+        // Test verification status
+        function testVerificationStatus() {
+            const status = {
+                hashMatches: true,
+                noTampering: true,
+                borrowerDataIntact: true,
+                sealedDateTime: '2024-01-15T14:30:25Z',
+                walacorTxId: 'TX_abc123def456',
+                overallStatus: 'verified'
+            };
+            displayResult('verificationResult', status);
+        }
+
+        // Test borrower information
+        function testBorrowerInfo() {
+            const borrowerInfo = {
+                full_name: 'John Smith',
+                date_of_birth: '1985-03-15',
+                email: 'j***@email.com',
+                phone: '***-***-1234',
+                city: 'Anytown',
+                state: 'CA',
+                employment_status: 'employed',
+                annual_income_range: '$50,000 - $75,000',
+                co_borrower_name: 'Jane Smith',
+                is_sealed: true,
+                walacor_tx_id: 'TX_abc123def456',
+                seal_timestamp: '2024-01-15T14:30:25Z'
+            };
+            displayResult('borrowerResult', borrowerInfo);
+        }
+
+        // Test signature verification
+        function testSignatureVerification() {
+            const statusElement = document.getElementById('signatureStatus');
+            statusElement.innerHTML = '<span style="color: orange;">⏳ Verifying...</span>';
+            
+            setTimeout(() => {
+                statusElement.innerHTML = '<span style="color: green;">✅ Signature Valid</span>';
+                displayResult('cryptoResult', {
+                    signature_valid: true,
+                    verification_timestamp: new Date().toISOString(),
+                    message: 'Digital signature verified successfully'
+                });
+            }, 2000);
+        }
+
+        // Test certificate generation
+        function testCertificateGeneration() {
+            const certificate = {
+                document_hash: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
+                seal_date: '2024-01-15T14:30:25Z',
+                tx_id: 'TX_abc123def456',
+                verification_timestamp: new Date().toISOString(),
+                borrower_name: 'John Smith',
+                loan_amount: 150000,
+                qr_code_data: JSON.stringify({
+                    artifact_id: 'test-artifact-123',
+                    verification_url: window.location.origin + '/verify?hash=test-hash',
+                    timestamp: new Date().toISOString()
+                }),
+                platform_signature: 'IntegrityX_Platform_Signature_xyz789'
+            };
+            displayResult('certificateResult', certificate);
+        }
+
+        // Test PDF download
+        function testPDFDownload() {
+            // Simulate PDF download
+            const pdfContent = 'PDF content would be generated here';
+            const blob = new Blob([pdfContent], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'verification-certificate.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            displayResult('certificateResult', { message: 'PDF certificate downloaded successfully' });
+        }
+
+        // Test audit trail
+        function testAuditTrail() {
+            const auditTrail = [
+                {
+                    event_id: 'evt_001',
+                    event_type: 'document_created',
+                    user_id: 'user_123',
+                    timestamp: '2024-01-15T14:25:10Z',
+                    details: {
+                        action: 'Document uploaded and processed',
+                        file_size: 1024,
+                        file_type: 'application/json'
+                    }
+                },
+                {
+                    event_id: 'evt_002',
+                    event_type: 'blockchain_sealed',
+                    user_id: 'system',
+                    timestamp: '2024-01-15T14:30:25Z',
+                    details: {
+                        action: 'Document sealed in Walacor blockchain',
+                        tx_id: 'TX_abc123def456',
+                        block_height: 12345
+                    }
+                },
+                {
+                    event_id: 'evt_003',
+                    event_type: 'borrower_data_accessed',
+                    user_id: 'admin_456',
+                    timestamp: '2024-01-15T15:00:00Z',
+                    details: {
+                        action: 'Borrower information accessed for verification',
+                        access_reason: 'Document verification'
+                    }
+                },
+                {
+                    event_id: 'evt_004',
+                    event_type: 'verified',
+                    user_id: 'verifier_789',
+                    timestamp: '2024-01-15T15:45:10Z',
+                    details: {
+                        action: 'Document verification completed',
+                        verification_result: 'success',
+                        ip_address: '192.168.1.100'
+                    }
+                }
+            ];
+            displayResult('auditResult', auditTrail);
+        }
+
+        // Test proof bundle download
+        function testProofBundleDownload() {
+            const proofBundle = {
+                proof: {
+                    artifact_id: 'test-artifact-123',
+                    document_hash: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
+                    verification_status: {
+                        hashMatches: true,
+                        noTampering: true,
+                        borrowerDataIntact: true,
+                        overallStatus: 'verified'
+                    },
+                    cryptographic_proof: {
+                        merkle_root: '0x1a2b3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890',
+                        block_hash: '0x9f8e7d6c5b4a392817060504030201009f8e7d6c5b4a39281706050403020100',
+                        digital_signature: '0x7d6c5b4a392817060504030201009f8e7d6c5b4a392817060504030201009f8e7d6c5b4a392817060504030201009f8e7d6c5b4a39281706050403020100',
+                        signature_valid: true
+                    },
+                    timestamp: new Date().toISOString()
+                },
+                borrower_info: {
+                    full_name: 'John Smith',
+                    email: 'j***@email.com',
+                    phone: '***-***-1234',
+                    city: 'Anytown',
+                    state: 'CA',
+                    employment_status: 'employed',
+                    annual_income_range: '$50,000 - $75,000'
+                },
+                audit_trail: [
+                    {
+                        event_type: 'document_created',
+                        timestamp: '2024-01-15T14:25:10Z',
+                        user_id: 'user_123'
+                    },
+                    {
+                        event_type: 'blockchain_sealed',
+                        timestamp: '2024-01-15T14:30:25Z',
+                        user_id: 'system'
+                    }
+                ],
+                certificate: {
+                    document_hash: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
+                    seal_date: '2024-01-15T14:30:25Z',
+                    tx_id: 'TX_abc123def456',
+                    verification_timestamp: new Date().toISOString(),
+                    borrower_name: 'John Smith',
+                    platform_signature: 'IntegrityX_Platform_Signature_xyz789'
+                }
+            };
+
+            // Create download
+            const blob = new Blob([JSON.stringify(proofBundle, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'proof-bundle-test-artifact-123.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            displayResult('bundleResult', { message: 'Proof bundle downloaded successfully' });
+        }
+
+        // Test borrower info API
+        async function testBorrowerInfoAPI() {
+            const artifactId = document.getElementById('artifactIdInput').value || '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/${artifactId}/borrower`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResult('apiResult', data);
+                } else {
+                    displayResult('apiResult', data, true);
+                }
+            } catch (error) {
+                displayResult('apiResult', { error: error.message }, true);
+            }
+        }
+
+        // Test audit trail API
+        async function testAuditTrailAPI() {
+            const artifactId = document.getElementById('artifactIdInput').value || '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/${artifactId}/audit-trail`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResult('apiResult', data);
+                } else {
+                    displayResult('apiResult', data, true);
+                }
+            } catch (error) {
+                displayResult('apiResult', { error: error.message }, true);
+            }
+        }
+
+        // Test verification API
+        async function testVerificationAPI() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        etid: 100005,
+                        payloadHash: 'test-hash-123'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResult('apiResult', data);
+                } else {
+                    displayResult('apiResult', data, true);
+                }
+            } catch (error) {
+                displayResult('apiResult', { error: error.message }, true);
+            }
+        }
+
+        // Auto-populate with example data
+        window.onload = function() {
+            document.getElementById('artifactIdInput').value = '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+        };
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-sealed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Dashboard Test</h1>
+        <p>This page tests the admin dashboard functionality for managing sealed loan documents.</p>
+
+        <!-- Statistics Cards -->
+        <div class="test-section">
+            <h3>📊 Statistics Dashboard</h3>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDocs">-</div>
+                    <div class="stat-label">Total Documents</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="docsToday">-</div>
+                    <div class="stat-label">Documents Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingSeals">-</div>
+                    <div class="stat-label">Pending Seals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="failedSeals">-</div>
+                    <div class="stat-label">Failed Seals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="errorRate">-</div>
+                    <div class="stat-label">Error Rate</div>
+                </div>
+            </div>
+            <button onclick="loadStatistics()">Load Statistics</button>
+            <div id="statsResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Search and Filter Test -->
+        <div class="test-section">
+            <h3>🔍 Search & Filter Test</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 15px 0;">
+                <input type="text" id="searchInput" placeholder="Search by borrower name..." style="padding: 8px;">
+                <input type="date" id="dateFromInput" style="padding: 8px;">
+                <input type="date" id="dateToInput" style="padding: 8px;">
+                <select id="statusSelect" style="padding: 8px;">
+                    <option value="">All Statuses</option>
+                    <option value="sealed">Sealed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+            <button onclick="searchDocuments()">Search Documents</button>
+            <button onclick="exportCSV()">Export CSV</button>
+            <div id="searchResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="test-section">
+            <h3>📋 Documents Table</h3>
+            <div id="documentsTable">
+                <p>Click "Load Documents" to see the table</p>
+            </div>
+            <button onclick="loadDocuments()">Load Documents</button>
+            <button onclick="loadMoreDocuments()">Load More (Next Page)</button>
+        </div>
+
+        <!-- Document Actions Test -->
+        <div class="test-section">
+            <h3>⚡ Document Actions Test</h3>
+            <div style="margin: 15px 0;">
+                <label>Artifact ID: </label>
+                <input type="text" id="artifactIdInput" placeholder="Enter artifact ID" style="padding: 8px; width: 300px;">
+            </div>
+            <button onclick="viewDocumentDetails()">View Details</button>
+            <button onclick="viewAuditTrail()">View Audit Trail</button>
+            <button onclick="verifyDocument()">Verify Document</button>
+            <button onclick="exportDocument()">Export Document</button>
+            <div id="actionResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Bulk Actions Test -->
+        <div class="test-section">
+            <h3>📦 Bulk Actions Test</h3>
+            <div id="bulkSelection">
+                <p>Select documents from the table above, then test bulk actions</p>
+            </div>
+            <button onclick="bulkExport()">Bulk Export Selected</button>
+            <button onclick="bulkVerify()">Bulk Verify Selected</button>
+            <div id="bulkResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        let currentPage = 1;
+        let selectedDocuments = new Set();
+
+        // Helper function to display results
+        function displayResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/search?limit=100`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const results = data.data.results;
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    const documentsToday = results.filter(doc => 
+                        doc.upload_date.startsWith(today)
+                    ).length;
+                    
+                    const pendingSeals = results.filter(doc => 
+                        doc.sealed_status.toLowerCase().includes('pending')
+                    ).length;
+                    
+                    const failedSeals = results.filter(doc => 
+                        doc.sealed_status.toLowerCase().includes('failed')
+                    ).length;
+                    
+                    const errorRate = results.length > 0 ? (failedSeals / results.length) * 100 : 0;
+
+                    // Update UI
+                    document.getElementById('totalDocs').textContent = results.length;
+                    document.getElementById('docsToday').textContent = documentsToday;
+                    document.getElementById('pendingSeals').textContent = pendingSeals;
+                    document.getElementById('failedSeals').textContent = failedSeals;
+                    document.getElementById('errorRate').textContent = errorRate.toFixed(1) + '%';
+
+                    displayResult('statsResult', {
+                        totalDocuments: results.length,
+                        documentsToday,
+                        pendingSeals,
+                        failedSeals,
+                        errorRate: errorRate.toFixed(1) + '%'
+                    });
+                } else {
+                    displayResult('statsResult', data, true);
+                }
+            } catch (error) {
+                displayResult('statsResult', { error: error.message }, true);
+            }
+        }
+
+        // Search documents
+        async function searchDocuments() {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const dateFrom = document.getElementById('dateFromInput').value;
+                const dateTo = document.getElementById('dateToInput').value;
+                const status = document.getElementById('statusSelect').value;
+
+                const params = new URLSearchParams();
+                if (search) params.append('borrower_name', search);
+                if (dateFrom) params.append('date_from', dateFrom);
+                if (dateTo) params.append('date_to', dateTo);
+                if (status) params.append('is_sealed', status === 'sealed');
+
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/search?${params}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('searchResult', data);
+                    updateDocumentsTable(data.data.results);
+                } else {
+                    displayResult('searchResult', data, true);
+                }
+            } catch (error) {
+                displayResult('searchResult', { error: error.message }, true);
+            }
+        }
+
+        // Load documents
+        async function loadDocuments() {
+            try {
+                currentPage = 1;
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/search?limit=10&offset=0`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateDocumentsTable(data.data.results);
+                } else {
+                    displayResult('searchResult', data, true);
+                }
+            } catch (error) {
+                displayResult('searchResult', { error: error.message }, true);
+            }
+        }
+
+        // Load more documents
+        async function loadMoreDocuments() {
+            try {
+                currentPage++;
+                const offset = (currentPage - 1) * 10;
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/search?limit=10&offset=${offset}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const existingTable = document.getElementById('documentsTable');
+                    const newTable = createDocumentsTable(data.data.results);
+                    existingTable.innerHTML += newTable;
+                } else {
+                    displayResult('searchResult', data, true);
+                }
+            } catch (error) {
+                displayResult('searchResult', { error: error.message }, true);
+            }
+        }
+
+        // Update documents table
+        function updateDocumentsTable(documents) {
+            const tableHtml = createDocumentsTable(documents);
+            document.getElementById('documentsTable').innerHTML = tableHtml;
+        }
+
+        // Create documents table
+        function createDocumentsTable(documents) {
+            if (documents.length === 0) {
+                return '<p>No documents found</p>';
+            }
+
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="toggleSelectAll(this)"></th>
+                            <th>Loan ID</th>
+                            <th>Borrower Name</th>
+                            <th>Loan Amount</th>
+                            <th>Upload Date</th>
+                            <th>Seal Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            documents.forEach(doc => {
+                const statusClass = doc.sealed_status.toLowerCase().includes('sealed') ? 'badge-sealed' :
+                                  doc.sealed_status.toLowerCase().includes('pending') ? 'badge-pending' : 'badge-failed';
+                
+                tableHtml += `
+                    <tr>
+                        <td><input type="checkbox" value="${doc.artifact_id}" onchange="toggleDocumentSelection(this)"></td>
+                        <td>${doc.loan_id}</td>
+                        <td>
+                            <div>${doc.borrower_name}</div>
+                            <div style="font-size: 12px; color: #666;">${doc.borrower_email}</div>
+                        </td>
+                        <td>$${doc.loan_amount.toLocaleString()}</td>
+                        <td>${new Date(doc.upload_date).toLocaleDateString()}</td>
+                        <td><span class="badge ${statusClass}">${doc.sealed_status}</span></td>
+                        <td>
+                            <button onclick="viewDocumentDetails('${doc.artifact_id}')" style="padding: 4px 8px; font-size: 12px;">View</button>
+                            <button onclick="viewAuditTrail('${doc.artifact_id}')" style="padding: 4px 8px; font-size: 12px;">Audit</button>
+                            <button onclick="verifyDocument('${doc.artifact_id}')" style="padding: 4px 8px; font-size: 12px;">Verify</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += '</tbody></table>';
+            return tableHtml;
+        }
+
+        // Toggle select all
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][value]');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+                toggleDocumentSelection(cb);
+            });
+        }
+
+        // Toggle document selection
+        function toggleDocumentSelection(checkbox) {
+            if (checkbox.checked) {
+                selectedDocuments.add(checkbox.value);
+            } else {
+                selectedDocuments.delete(checkbox.value);
+            }
+            updateBulkSelection();
+        }
+
+        // Update bulk selection display
+        function updateBulkSelection() {
+            const element = document.getElementById('bulkSelection');
+            element.innerHTML = `
+                <p>Selected ${selectedDocuments.size} documents</p>
+                <p>Selected IDs: ${Array.from(selectedDocuments).join(', ')}</p>
+            `;
+        }
+
+        // View document details
+        async function viewDocumentDetails(artifactId = null) {
+            const id = artifactId || document.getElementById('artifactIdInput').value;
+            if (!id) {
+                alert('Please enter an artifact ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/${id}/borrower`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('actionResult', data);
+                } else {
+                    displayResult('actionResult', data, true);
+                }
+            } catch (error) {
+                displayResult('actionResult', { error: error.message }, true);
+            }
+        }
+
+        // View audit trail
+        async function viewAuditTrail(artifactId = null) {
+            const id = artifactId || document.getElementById('artifactIdInput').value;
+            if (!id) {
+                alert('Please enter an artifact ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/${id}/audit-trail`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('actionResult', data);
+                } else {
+                    displayResult('actionResult', data, true);
+                }
+            } catch (error) {
+                displayResult('actionResult', { error: error.message }, true);
+            }
+        }
+
+        // Verify document
+        async function verifyDocument(artifactId = null) {
+            const id = artifactId || document.getElementById('artifactIdInput').value;
+            if (!id) {
+                alert('Please enter an artifact ID');
+                return;
+            }
+
+            try {
+                // First get the artifact to find the ETID
+                const artifactResponse = await fetch(`${API_BASE_URL}/api/artifacts/${id}`);
+                const artifactData = await artifactResponse.json();
+                
+                if (!artifactResponse.ok) {
+                    displayResult('actionResult', artifactData, true);
+                    return;
+                }
+
+                const verifyRequest = {
+                    etid: artifactData.data.etid,
+                    payloadHash: 'placeholder-hash'
+                };
+
+                const response = await fetch(`${API_BASE_URL}/api/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(verifyRequest)
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult('actionResult', data);
+                } else {
+                    displayResult('actionResult', data, true);
+                }
+            } catch (error) {
+                displayResult('actionResult', { error: error.message }, true);
+            }
+        }
+
+        // Export document
+        async function exportDocument(artifactId = null) {
+            const id = artifactId || document.getElementById('artifactIdInput').value;
+            if (!id) {
+                alert('Please enter an artifact ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/artifacts/${id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Create download link
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `loan-document-${id}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    
+                    displayResult('actionResult', { message: 'Document exported successfully' });
+                } else {
+                    displayResult('actionResult', data, true);
+                }
+            } catch (error) {
+                displayResult('actionResult', { error: error.message }, true);
+            }
+        }
+
+        // Export CSV
+        async function exportCSV() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/loan-documents/search?limit=100`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const csvContent = [
+                        ['Loan ID', 'Borrower Name', 'Loan Amount', 'Upload Date', 'Seal Status', 'Transaction ID'],
+                        ...data.data.results.map(doc => [
+                            doc.loan_id,
+                            doc.borrower_name,
+                            doc.loan_amount.toString(),
+                            doc.upload_date,
+                            doc.sealed_status,
+                            doc.walacor_tx_id || 'N/A'
+                        ])
+                    ].map(row => row.join(',')).join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `loan-documents-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    
+                    displayResult('searchResult', { message: 'CSV exported successfully' });
+                } else {
+                    displayResult('searchResult', data, true);
+                }
+            } catch (error) {
+                displayResult('searchResult', { error: error.message }, true);
+            }
+        }
+
+        // Bulk export
+        async function bulkExport() {
+            if (selectedDocuments.size === 0) {
+                alert('Please select documents to export');
+                return;
+            }
+
+            try {
+                displayResult('bulkResult', { message: `Exporting ${selectedDocuments.size} documents...` });
+                
+                // Simulate bulk export
+                setTimeout(() => {
+                    displayResult('bulkResult', { message: 'Bulk export completed successfully' });
+                }, 2000);
+            } catch (error) {
+                displayResult('bulkResult', { error: error.message }, true);
+            }
+        }
+
+        // Bulk verify
+        async function bulkVerify() {
+            if (selectedDocuments.size === 0) {
+                alert('Please select documents to verify');
+                return;
+            }
+
+            try {
+                displayResult('bulkResult', { message: `Verifying ${selectedDocuments.size} documents...` });
+                
+                // Simulate bulk verification
+                setTimeout(() => {
+                    displayResult('bulkResult', { message: 'Bulk verification completed successfully' });
+                }, 2000);
+            } catch (error) {
+                displayResult('bulkResult', { error: error.message }, true);
+            }
+        }
+
+        // Auto-populate with example data
+        window.onload = function() {
+            document.getElementById('artifactIdInput').value = '5850f0f1-0b5c-4166-bd31-110e4d47bf28';
+            loadStatistics();
+        };
+    </script>
+</body>
+</html>
+

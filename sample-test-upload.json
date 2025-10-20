@@ -1,0 +1,18 @@
+{
+  "loanId": "LOAN_TEST_001",
+  "amount": 300000,
+  "rate": 7.2,
+  "term": 240,
+  "borrower": {
+    "name": "Jane Doe",
+    "email": "jane.doe@email.com",
+    "phone": "+1-555-9876"
+  },
+  "property": {
+    "address": "789 Pine Street, San Francisco, CA 94102",
+    "purchasePrice": 500000
+  },
+  "loanType": "conventional",
+  "purpose": "purchase",
+  "status": "Approved"
+}

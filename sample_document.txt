@@ -1,0 +1,27 @@
+LOAN AGREEMENT - SAMPLE DOCUMENT
+================================
+
+Loan ID: DEMO_LOAN_001
+Borrower: John Doe
+Amount: $500,000
+Interest Rate: 4.5%
+Term: 30 years
+
+This is a sample loan document for testing the IntegrityX
+financial document integrity system.
+
+Document Properties:
+- Type: loan_agreement
+- Created: 2024-12-03
+- Purpose: Demo and testing
+- Security: Cryptographically secured with SHA-256
+
+This document demonstrates the tampering detection capabilities
+of the IntegrityX system. Any modification to this content
+will be detected through hash comparison.
+
+END OF DOCUMENT
+
+
+
+

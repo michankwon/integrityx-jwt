@@ -6,6 +6,7 @@ A comprehensive financial document integrity system that uses cryptographic hash
 
 - **📤 Document Upload**: Secure document storage with cryptographic hashing
 - **🔍 Integrity Verification**: Tampering detection using hash comparison
+- **✍️ Digital Signatures**: JWT-based document signing for cryptographic proof of authenticity
 - **🔗 Provenance Tracking**: Complete document lineage and relationship tracking
 - **⏰ Time Machine**: View document states at any past timestamp
 - **📊 Audit Trails**: Comprehensive logging and compliance reporting
@@ -96,9 +97,20 @@ WALACOR_PASSWORD=your-password
 STORAGE_PATH=data/documents
 TEMP_PATH=data/temp
 
+# JWT Digital Signatures (REQUIRED)
+JWT_PRIVATE_KEY_PATH=secrets/jwt_private.pem
+JWT_PUBLIC_KEY_PATH=secrets/jwt_public.pem
+JWT_ISSUER=integrityx-demo
+JWT_TTL_SECONDS=3600
+
 # Security
 SECRET_KEY=your-secret-key
 SESSION_TIMEOUT_MINUTES=30
+
+# JWT Digital Signatures
+JWT_PRIVATE_KEY_PATH=keys/jwt_private_key.pem
+JWT_PUBLIC_KEY_PATH=keys/jwt_public_key.pem
+JWT_ISSUER=integrityx
 ```
 
 ## 📋 Attestations & Provenance
@@ -363,10 +375,48 @@ open frontend/test_disclosure_pack.html
 ## 🔒 Security Features
 
 - **Cryptographic Hashing**: SHA-256 for document integrity
+- **Digital Signatures**: RSA-2048 JWT signatures with canonical JSON for tamper-proof verification
 - **Blockchain Storage**: Immutable audit trails
 - **Access Control**: User authentication and authorization
 - **Audit Logging**: Complete activity tracking
 - **Data Encryption**: Secure data transmission and storage
+
+### 🔐 JWT Digital Signatures
+
+IntegrityX includes built-in JWT (JSON Web Token) digital signature capabilities that provide cryptographic proof of document authenticity and tamper detection.
+
+#### Key Features
+- **RS256 Algorithm**: RSA signatures with SHA-256 hashing
+- **2048-bit RSA Keys**: Industry-standard key strength
+- **Canonical JSON**: Consistent payload representation for signing
+- **Automatic Integration**: Documents are automatically signed during sealing
+- **Tamper Detection**: Any modification to signed documents is immediately detected
+
+#### Setup Requirements
+1. **Generate RSA Key Pair**:
+   ```bash
+   cd backend
+   python generate_jwt_keys.py
+   ```
+
+2. **Configure Environment Variables**:
+   ```env
+   JWT_PRIVATE_KEY_PATH=keys/jwt_private_key.pem
+   JWT_PUBLIC_KEY_PATH=keys/jwt_public_key.pem
+   JWT_ISSUER=integrityx
+   ```
+
+#### Operational Considerations
+- **Key Security**: Store private keys securely with restricted access
+- **Key Rotation**: Rotate keys periodically (recommended: annually)
+- **Backup Strategy**: Maintain secure backups of both public and private keys
+- **Token Expiration**: Default 1-hour expiration for signed tokens
+- **Verification**: Signatures are verified during document integrity checks
+
+#### API Integration
+- **Seal Endpoint**: `/api/seal` automatically generates JWT signatures
+- **Verify Endpoint**: `/api/verify` includes JWT verification in response
+- **Response Format**: JWT data returned in `signature_jwt` field
 
 ## 📈 Performance
 

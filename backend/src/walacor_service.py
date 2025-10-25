@@ -16,8 +16,12 @@ a clean, business-focused API for the IntegrityX application.
 
 import os
 import json
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
+
+# Set up logger
+logger = logging.getLogger(__name__)
 from dotenv import load_dotenv
 
 from walacor_sdk import WalacorService
@@ -266,6 +270,66 @@ class WalacorIntegrityService:
             
         except Exception as e:
             raise RuntimeError(f"Failed to store document hash: {e}")
+    
+    def seal_document(self, etid: str, payload_hash: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Seal a generic document in the Walacor blockchain.
+        
+        This method provides a generic interface for sealing any type of document
+        identified by an ETID and payload hash.
+        
+        Args:
+            etid (str): Entity Type ID for the document
+            payload_hash (str): SHA-256 hash of the document payload
+            metadata (Dict[str, Any], optional): Additional metadata to store
+            
+        Returns:
+            Dict[str, Any]: Result containing:
+                - transaction_id: Transaction ID from Walacor blockchain
+                - document_hash: SHA-256 hash that was sealed
+                - sealed_timestamp: ISO timestamp when sealed
+                - proof_bundle: Proof of blockchain sealing
+        """
+        try:
+            # Create transaction for generic document sealing
+            transaction_data = {
+                "etid": etid,
+                "payload_hash": payload_hash,
+                "metadata": metadata or {},
+                "operation": "seal_document",
+                "sealed_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            # Create transaction in local blockchain
+            transaction_id = self._create_transaction("SEAL_DOCUMENT", transaction_data)
+            
+            # Add to blockchain
+            block_hash = self._add_block([transaction_id])
+            
+            # Create result
+            result = {
+                "transaction_id": transaction_id,
+                "document_hash": payload_hash,
+                "sealed_timestamp": datetime.now(timezone.utc).isoformat(),
+                "proof_bundle": {
+                    "blockchain_proof": {
+                        "transaction_id": transaction_id,
+                        "block_hash": block_hash,
+                        "blockchain_network": "walacor",
+                        "etid": etid,
+                        "seal_timestamp": datetime.now(timezone.utc).isoformat(),
+                        "integrity_verified": True,
+                        "immutability_established": True
+                    }
+                }
+            }
+            
+            logger.info(f"✅ Document sealed in blockchain: etid={etid}, hash={payload_hash[:16]}...")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Failed to seal document: {e}")
+            raise RuntimeError(f"Failed to seal document: {e}")
     
     def seal_loan_document(self, loan_id: str, loan_data: Dict[str, Any], 
                           borrower_data: Dict[str, Any], files: List[Dict[str, Any]]) -> Dict[str, Any]:

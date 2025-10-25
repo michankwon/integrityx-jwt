@@ -255,6 +255,33 @@ class Database:
             logger.error(f"Database error creating artifact: {e}")
             session.rollback()
             raise
+
+    def update_artifact_signature(self, artifact_id: str, signature_jwt: str) -> None:
+        """
+        Update the JWT signature for an existing artifact.
+
+        Args:
+            artifact_id: The artifact identifier.
+            signature_jwt: The JWT signature to store.
+        """
+        if not artifact_id:
+            raise ValueError("artifact_id is required")
+        if not signature_jwt:
+            raise ValueError("signature_jwt is required")
+
+        session = self._ensure_session()
+        try:
+            artifact = session.query(Artifact).filter(Artifact.id == artifact_id).one_or_none()
+            if not artifact:
+                raise ValueError(f"Artifact {artifact_id} not found")
+
+            artifact.signature_jwt = signature_jwt
+            session.commit()
+            logger.info(f"Updated signature for artifact {artifact_id}")
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Database error updating artifact signature: {e}")
+            raise
     
     def create_or_get_artifact(
         self,

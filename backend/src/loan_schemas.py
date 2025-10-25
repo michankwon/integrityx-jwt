@@ -359,6 +359,7 @@ class LoanDocumentSealResponse(BaseModel):
     hash: str = Field(..., description="SHA-256 hash of sealed document")
     sealed_at: str = Field(..., description="ISO timestamp when sealed")
     blockchain_proof: Optional[Dict[str, Any]] = Field(None, description="Blockchain proof data")
+    signature_jwt: Optional[str] = Field(None, description="JWT signature of the canonical payload")
 
 
 # Utility functions for data masking

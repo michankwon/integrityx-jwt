@@ -22,8 +22,15 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-from document_handler import DocumentHandler
-from walacor_service import WalacorIntegrityService
+try:
+    from .document_handler import DocumentHandler
+    from .walacor_service import WalacorIntegrityService
+    from .jwt_service import verify_signature, canonical_json
+except ImportError:
+    # Fallback for when running as script
+    from document_handler import DocumentHandler
+    from walacor_service import WalacorIntegrityService
+    from jwt_service import verify_signature, canonical_json
 
 
 class DocumentVerifier:
@@ -418,6 +425,60 @@ class DocumentVerifier:
             error_msg = f"File change detection failed: {e}"
             print(f"❌ {error_msg}")
             raise RuntimeError(error_msg)
+    
+    def verify_jwt_signature(self, artifact, payload_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Verify JWT signature for document integrity.
+        
+        Args:
+            artifact: Database artifact object with signature_jwt field
+            payload_data: The original document payload to verify
+            
+        Returns:
+            Dict[str, Any]: JWT verification result containing:
+                - jwt_valid (bool): True if JWT signature is valid
+                - jwt_error (str): Error message if verification failed
+                - jwt_claims (dict): JWT claims if verification succeeded
+        """
+        try:
+            # Check if JWT signature exists
+            stored_token = getattr(artifact, 'signature_jwt', None)
+            
+            if not stored_token:
+                return {
+                    "jwt_valid": False,
+                    "jwt_error": "No JWT signature found",
+                    "jwt_claims": None
+                }
+            
+            # Verify the JWT signature
+            claims = verify_signature(stored_token, payload_data)
+            
+            return {
+                "jwt_valid": True,
+                "jwt_error": None,
+                "jwt_claims": {
+                    "artifact_id": claims.get("artifact_id"),
+                    "issued_at": claims.get("iat"),
+                    "expires_at": claims.get("exp"),
+                    "issuer": claims.get("iss")
+                }
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            if "expired" in error_msg.lower():
+                error_msg = "JWT signature has expired"
+            elif "invalid" in error_msg.lower():
+                error_msg = "JWT signature is invalid"
+            elif "payload mismatch" in error_msg.lower():
+                error_msg = "Document content does not match JWT signature"
+                
+            return {
+                "jwt_valid": False,
+                "jwt_error": error_msg,
+                "jwt_claims": None
+            }
     
     def _create_verification_result(self, is_valid: bool, current_hash: str, 
                                   stored_hash: Optional[str], tampered: Optional[bool],

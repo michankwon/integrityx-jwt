@@ -1,0 +1,24 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/bin/python3",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend",
+        "${workspaceFolder}/backend/src",
+        "${workspaceFolder}/backend/venv/lib/python3.13/site-packages"
+    ],
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.linting.enabled": false,
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.packageIndexDepths": [
+        {
+            "name": "",
+            "depth": 5
+        }
+    ],
+    "files.associations": {
+        "*.py": "python"
+    },
+    "python.envFile": "${workspaceFolder}/backend/.env"
+}

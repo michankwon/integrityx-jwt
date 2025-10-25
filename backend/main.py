@@ -31,6 +31,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 import json
+import jwt
 import os
 import uuid
 import logging
@@ -67,6 +68,7 @@ from src.smart_contracts import SmartContractsService
 from src.predictive_analytics import PredictiveAnalyticsService
 from src.document_intelligence import DocumentIntelligenceService
 from src.encryption_service import get_encryption_service
+from src.jwt_service import canonical_json, sign_artifact, verify_signature
 from src.structured_logger import (
     log_endpoint_request, log_endpoint_start, with_structured_logging,
     log_database_operation, log_external_service_call,
@@ -91,6 +93,14 @@ async def lifespan(app: FastAPI):
         # Initialize database
         db = Database()
         logger.info("✅ Database service initialized")
+        
+        # Validate JWT configuration on startup
+        try:
+            from src.jwt_service import _PRIVATE_KEY, _PUBLIC_KEY, _ISSUER
+            logger.info(f"✅ JWT service initialized with issuer: {_ISSUER}")
+        except Exception as e:
+            logger.warning(f"⚠️ JWT service initialization failed: {e}")
+            logger.warning("JWT digital signatures will be unavailable")
         
         # Initialize document handler
         doc_handler = DocumentHandler()
@@ -195,6 +205,50 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# JWT Verification Helper Function
+def verify_jwt_signature(artifact, submitted_payload_dict):
+    """Verify JWT signature for submitted document"""
+    verification_result = {}
+    
+    try:
+        # Get the stored JWT token from database
+        stored_token = getattr(artifact, "signature_jwt", None)
+        
+        if not stored_token:
+            verification_result["jwt_verified"] = False
+            verification_result["jwt_error"] = "No JWT signature found"
+            return verification_result
+            
+        # Verify the signature using your jwt_service
+        claims = verify_signature(stored_token, submitted_payload_dict)
+        
+        # If we get here, verification succeeded
+        verification_result["verified"] = True
+        verification_result["error"] = None
+        verification_result["claims"] = {
+            "artifact_id": claims.get("artifact_id"),
+            "issued_at": datetime.fromtimestamp(claims.get("iat", 0), timezone.utc).isoformat(),
+            "expires_at": datetime.fromtimestamp(claims.get("exp", 0), timezone.utc).isoformat()
+        }
+        
+    except jwt.ExpiredSignatureError:
+        verification_result["verified"] = False
+        verification_result["error"] = "JWT signature expired"
+        
+    except jwt.InvalidSignatureError:
+        verification_result["verified"] = False
+        verification_result["error"] = "Invalid JWT signature"
+        
+    except ValueError as e:
+        verification_result["verified"] = False
+        verification_result["error"] = f"Payload verification failed: {str(e)}"
+        
+    except Exception as e:
+        verification_result["verified"] = False
+        verification_result["error"] = f"Verification error: {str(e)}"
+    
+    return verification_result
 
 # Global service variables
 db = None
@@ -505,10 +559,16 @@ class VerificationResponse(BaseModel):
 # Dependency to check if services are initialized
 def get_services():
     """Get initialized services."""
-    if not all([db, doc_handler, json_handler, manifest_handler, attestation_repo, provenance_repo, verification_portal, voice_processor, analytics_service, ai_anomaly_detector, time_machine, smart_contracts, predictive_analytics, document_intelligence, advanced_security, hybrid_security]):
+    # Check only essential services (optional services like advanced_security can be None)
+    essential_services = [db, doc_handler, json_handler, manifest_handler, attestation_repo, 
+                         provenance_repo, verification_portal, voice_processor, analytics_service, 
+                         ai_anomaly_detector, time_machine, smart_contracts, predictive_analytics, 
+                         document_intelligence]
+    
+    if not all(essential_services):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Services not initialized"
+            detail="Essential services not initialized"
         )
     return {
         "db": db,
@@ -640,6 +700,21 @@ async def health_check():
             duration_ms=0.0,
             details="Manifest handler service"
         )
+        
+        # Check JWT service health
+        try:
+            from src.jwt_service import _PRIVATE_KEY, _PUBLIC_KEY, _ISSUER
+            services_health["jwt"] = ServiceHealth(
+                status="up",
+                duration_ms=0.0,
+                details=f"JWT service operational (issuer: {_ISSUER})"
+            )
+        except Exception as e:
+            services_health["jwt"] = ServiceHealth(
+                status="down",
+                duration_ms=0.0,
+                details=f"JWT service unavailable: {str(e)}"
+            )
         
         # Determine overall status
         critical_services = ["db", "walacor", "storage"]
@@ -981,6 +1056,21 @@ async def ingest_json(
             local_metadata=walacor_result.get("local_metadata", {}),
             borrower_info=borrower_info
         )
+        
+        # Generate JWT signature for the document
+        try:
+            # Use comprehensive document if available, otherwise use original JSON
+            payload_to_sign = comprehensive_doc_obj if comprehensive_doc_obj else json_data
+            jwt_token = sign_artifact(artifact_id, payload_to_sign)
+            
+            # Update the artifact with JWT signature
+            services["db"].update_artifact_signature(artifact_id, jwt_token)
+            
+            logger.info(f"✅ JWT signature created for artifact: {artifact_id}")
+            
+        except Exception as jwt_error:
+            logger.warning(f"Failed to create JWT signature: {jwt_error}")
+            # Don't fail the main operation if JWT signing fails
         
         # Log event with comprehensive information
         event_payload = {
@@ -1355,7 +1445,8 @@ async def get_artifacts(
                     "walacor_tx_id": artifact.walacor_tx_id,
                     "artifact_type": artifact.artifact_type,
                     "created_by": artifact.created_by,
-                    "sealed_status": "Sealed" if artifact.walacor_tx_id else "Not Sealed"
+                    "sealed_status": "Sealed" if artifact.walacor_tx_id else "Not Sealed",
+                    "signature_jwt": artifact.signature_jwt
                 }
                 filtered_artifacts.append(artifact_data)
         
@@ -1418,6 +1509,7 @@ async def get_artifact(
             "blockchain_seal": artifact.blockchain_seal,
             "local_metadata": artifact.local_metadata,
             "borrower_info": artifact.borrower_info,
+            "signature_jwt": artifact.signature_jwt,
             "files": [{
                 "id": f.id,
                 "name": f.name,
@@ -1602,6 +1694,38 @@ async def seal_artifact(
                 detail="Artifact not found after creation"
             )
         
+        # Generate JWT signature for the artifact
+        jwt_signature = None
+        try:
+            # Extract payload for JWT signing from metadata
+            metadata = request.metadata or {}
+            payload_for_jwt = None
+            
+            # Try to find the document payload in metadata
+            if isinstance(metadata, dict):
+                # Look for comprehensive_document or canonical_document
+                payload_for_jwt = metadata.get("comprehensive_document") or metadata.get("canonical_document")
+                
+                # If it's a string, try to parse it as JSON
+                if isinstance(payload_for_jwt, str):
+                    try:
+                        payload_for_jwt = json.loads(payload_for_jwt)
+                    except json.JSONDecodeError:
+                        payload_for_jwt = None
+            
+            # If we have a valid payload, generate JWT signature
+            if payload_for_jwt and isinstance(payload_for_jwt, dict):
+                jwt_signature = sign_artifact(artifact_id, payload_for_jwt)
+                
+                # Store JWT signature in database
+                services["db"].update_artifact_signature(artifact_id, jwt_signature)
+                logger.info(f"✅ JWT signature generated and stored for artifact: {artifact_id}")
+            else:
+                logger.warning(f"⚠️ No valid payload found for JWT signing in artifact: {artifact_id}")
+                
+        except Exception as e:
+            logger.warning(f"⚠️ JWT signature generation failed for artifact {artifact_id}: {e}")
+        
         # Seal in Walacor (if service is available)
         walacor_tx_id = artifact.walacor_tx_id
         proof_bundle = {}
@@ -1645,7 +1769,8 @@ async def seal_artifact(
             "artifact_id": artifact_id,
             "walacor_tx_id": walacor_tx_id,
             "sealed_at": datetime.now(timezone.utc).isoformat(),
-            "proof_bundle": proof_bundle
+            "proof_bundle": proof_bundle,
+            "signature_jwt": jwt_signature  # Include JWT signature in response
         }
         
         # Log successful completion
@@ -1765,6 +1890,47 @@ async def verify_artifact(
         # Verify against stored hash
         is_valid = artifact.payload_sha256 == request.payloadHash
         status_result = "ok" if is_valid else "tamper"
+
+        # Verify JWT signature if available
+        jwt_verification = {
+            "verified": False,
+            "error": "Signature not available",
+            "claims": None
+        }
+        stored_token = getattr(artifact, "signature_jwt", None)
+        if stored_token:
+            try:
+                metadata = artifact.local_metadata or {}
+                if isinstance(metadata, str):
+                    try:
+                        metadata = json.loads(metadata)
+                    except json.JSONDecodeError:
+                        metadata = {}
+                payload_candidate = metadata.get("comprehensive_document") or metadata.get("canonical_document")
+                if isinstance(payload_candidate, str):
+                    try:
+                        payload_candidate = json.loads(payload_candidate)
+                    except json.JSONDecodeError:
+                        payload_candidate = None
+                if payload_candidate:
+                    claims = verify_signature(stored_token, payload_candidate)
+                    jwt_verification["verified"] = True
+                    jwt_verification["error"] = None
+                    jwt_verification["claims"] = {
+                        "artifact_id": claims.get("artifact_id"),
+                        "issued_at": datetime.fromtimestamp(claims.get("iat", 0), timezone.utc).isoformat() if claims.get("iat") else None,
+                        "expires_at": datetime.fromtimestamp(claims.get("exp", 0), timezone.utc).isoformat() if claims.get("exp") else None,
+                    }
+                else:
+                    jwt_verification["error"] = "Canonical payload not available for verification"
+            except jwt.ExpiredSignatureError:
+                jwt_verification["error"] = "JWT signature expired"
+            except jwt.InvalidSignatureError:
+                jwt_verification["error"] = "Invalid JWT signature"
+            except ValueError as e:
+                jwt_verification["error"] = f"Payload verification failed: {str(e)}"
+            except Exception as sig_error:
+                jwt_verification["error"] = f"Verification error: {str(sig_error)}"
         
         # Record verification event
         services["db"].insert_event(
@@ -1807,7 +1973,8 @@ async def verify_artifact(
                 "stored_hash": artifact.payload_sha256,
                 "provided_hash": request.payloadHash,
                 "artifact_type": artifact.artifact_type,
-                "created_at": artifact.created_at.isoformat()
+                "created_at": artifact.created_at.isoformat(),
+                "jwt_signature": jwt_verification
             }
         }
         # Log successful completion
@@ -4194,6 +4361,7 @@ class LoanDocumentSealResponse(BaseModel):
     walacor_tx_id: str = Field(..., description="Walacor transaction ID")
     hash: str = Field(..., description="Document hash")
     sealed_at: str = Field(..., description="Sealing timestamp")
+    signature_jwt: Optional[str] = Field(None, description="JWT signature of the canonical payload")
 
 
 class MaskedBorrowerInfo(BaseModel):
@@ -4502,8 +4670,8 @@ async def seal_loan_document(
         
         # Calculate SHA-256 hash of the comprehensive document
         import hashlib
-        document_json = json.dumps(comprehensive_document, sort_keys=True, separators=(',', ':'))
-        document_hash = hashlib.sha256(document_json.encode('utf-8')).hexdigest()
+        canonical_document_str = canonical_json(comprehensive_document)
+        document_hash = hashlib.sha256(canonical_document_str.encode('utf-8')).hexdigest()
         
         logger.info(f"Sealing loan document {request.loan_id} with hash: {document_hash[:16]}...")
         
@@ -4519,7 +4687,7 @@ async def seal_loan_document(
         files_metadata = [{
             "filename": f"loan-{request.loan_id}.json",
             "file_type": "application/json",
-            "file_size": len(document_json.encode('utf-8')),
+            "file_size": len(canonical_document_str.encode('utf-8')),
             "upload_timestamp": datetime.now(timezone.utc).isoformat(),
             "content_hash": document_hash
         }]
@@ -4546,10 +4714,15 @@ async def seal_loan_document(
                 "includes_borrower_info": True,
                 "sealed_at": walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat()),
                 "walacor_envelope": walacor_result.get("envelope_metadata", {}),
-                "blockchain_proof": walacor_result.get("blockchain_proof", {})
+                "blockchain_proof": walacor_result.get("blockchain_proof", {}),
+                "canonical_document": canonical_document_str
             },
             borrower_info=encrypted_borrower_data
         )
+
+        # Generate and persist JWT signature for the canonical payload
+        signature_jwt = sign_artifact(artifact_id, comprehensive_document)
+        services["db"].update_artifact_signature(artifact_id, signature_jwt)
         
         logger.info(f"✅ Loan document sealed successfully: {artifact_id}")
         
@@ -4586,7 +4759,8 @@ async def seal_loan_document(
                 artifact_id=artifact_id,
                 walacor_tx_id=walacor_result.get("walacor_tx_id", f"TX_{int(time.time() * 1000)}_{document_hash[:8]}"),
                 hash=walacor_result.get("document_hash", document_hash),
-                sealed_at=walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat())
+                sealed_at=walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat()),
+                signature_jwt=signature_jwt
             ).dict()
         )
         
@@ -4637,6 +4811,9 @@ async def seal_loan_document_maximum_security(
             "security_level": "maximum"
         }
         
+        # Create canonical representation
+        canonical_document_str = canonical_json(comprehensive_document)
+
         # Create comprehensive security seal
         comprehensive_seal = advanced_security.create_comprehensive_seal(
             comprehensive_document, 
@@ -4659,7 +4836,7 @@ async def seal_loan_document_maximum_security(
         files_metadata = [{
             "filename": f"loan-{request.loan_id}-secure.json",
             "file_type": "application/json",
-            "file_size": len(json.dumps(comprehensive_document).encode('utf-8')),
+            "file_size": len(canonical_document_str.encode('utf-8')),
             "upload_timestamp": datetime.now(timezone.utc).isoformat(),
             "content_hash": primary_hash
         }]
@@ -4689,10 +4866,14 @@ async def seal_loan_document_maximum_security(
                 "verification_methods": ["multi_hash", "pki_signature", "content_integrity", "blockchain_seal"],
                 "sealed_at": walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat()),
                 "walacor_envelope": walacor_result.get("envelope_metadata", {}),
-                "blockchain_proof": walacor_result.get("blockchain_proof", {})
+                "blockchain_proof": walacor_result.get("blockchain_proof", {}),
+                "canonical_document": canonical_document_str
             },
             borrower_info=encrypted_borrower_data
         )
+
+        signature_jwt = sign_artifact(artifact_id, comprehensive_document)
+        services["db"].update_artifact_signature(artifact_id, signature_jwt)
         
         logger.info(f"✅ Loan document sealed with MAXIMUM SECURITY: {artifact_id}")
         
@@ -4730,15 +4911,16 @@ async def seal_loan_document_maximum_security(
                     "security_level": "maximum",
                     "tamper_resistance": "high",
                     "verification_methods": comprehensive_seal['security_metadata']['verification_methods'],
-                    "multi_hash_algorithms": list(comprehensive_seal['content_signature']['content_hash'].keys()),
-                    "pki_signature": {
-                        "algorithm": comprehensive_seal['pki_signature']['algorithm'],
-                        "key_size": comprehensive_seal['pki_signature']['key_size']
-                    }
+                "multi_hash_algorithms": list(comprehensive_seal['content_signature']['content_hash'].keys()),
+                "pki_signature": {
+                    "algorithm": comprehensive_seal['pki_signature']['algorithm'],
+                    "key_size": comprehensive_seal['pki_signature']['key_size']
+                }
                 },
                 "hash": primary_hash,
                 "sealed_at": walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat()),
-                "blockchain_proof": walacor_result.get("blockchain_proof", {})
+                "blockchain_proof": walacor_result.get("blockchain_proof", {}),
+                "signature_jwt": signature_jwt
             }
         )
         
@@ -4911,7 +5093,16 @@ async def verify_maximum_security_document(
             )
         
         # Check if this is a maximum security document
-        local_metadata = json.loads(artifact.local_metadata) if artifact.local_metadata else {}
+        raw_metadata = artifact.local_metadata
+        if isinstance(raw_metadata, str):
+            try:
+                local_metadata = json.loads(raw_metadata)
+            except json.JSONDecodeError:
+                local_metadata = {}
+        elif isinstance(raw_metadata, dict):
+            local_metadata = raw_metadata
+        else:
+            local_metadata = {}
         if local_metadata.get("security_level") != "maximum":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -4928,6 +5119,25 @@ async def verify_maximum_security_document(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Maximum security metadata incomplete"
             )
+
+        # Verify JWT signature for the stored comprehensive document
+        jwt_verified = False
+        jwt_claims: Optional[Dict[str, Any]] = None
+        jwt_error: Optional[str] = None
+        stored_token = getattr(artifact, "signature_jwt", None)
+        if stored_token:
+            try:
+                claims = verify_signature(stored_token, comprehensive_document)
+                jwt_verified = True
+                jwt_claims = {
+                    "artifact_id": claims.get("artifact_id"),
+                    "issued_at": datetime.fromtimestamp(claims.get("iat", 0), timezone.utc).isoformat() if claims.get("iat") else None,
+                    "expires_at": datetime.fromtimestamp(claims.get("exp", 0), timezone.utc).isoformat() if claims.get("exp") else None,
+                }
+            except (jwt.ExpiredSignatureError, jwt.InvalidSignatureError, jwt.InvalidTokenError, ValueError) as sig_error:
+                jwt_error = str(sig_error)
+        else:
+            jwt_error = "Signature not available for this artifact"
         
         # Perform comprehensive verification
         advanced_security = services["advanced_security"]
@@ -4979,6 +5189,11 @@ async def verify_maximum_security_document(
                     "pki_signature": verification_results['pki_signature'],
                     "blockchain_seal": blockchain_verified,
                     "multi_hash_verification": verification_results['content_integrity']['hash_verification']
+                },
+                "jwt_signature": {
+                    "verified": jwt_verified,
+                    "claims": jwt_claims,
+                    "error": jwt_error
                 },
                 "security_report": security_report,
                 "comprehensive_seal": {
@@ -5038,6 +5253,8 @@ async def seal_loan_document_quantum_safe(
             "security_level": "quantum_safe"
         }
         
+        canonical_document_str = canonical_json(comprehensive_document)
+
         # Create quantum-safe hybrid seal
         quantum_safe_seal = hybrid_security_service.create_hybrid_seal(
             comprehensive_document, 
@@ -5060,7 +5277,7 @@ async def seal_loan_document_quantum_safe(
         files_metadata = [{
             "filename": f"loan-{request.loan_id}-quantum-safe.json",
             "file_type": "application/json",
-            "file_size": len(json.dumps(comprehensive_document).encode('utf-8')),
+            "file_size": len(canonical_document_str.encode('utf-8')),
             "upload_timestamp": datetime.now(timezone.utc).isoformat(),
             "content_hash": primary_hash
         }]
@@ -5089,10 +5306,14 @@ async def seal_loan_document_quantum_safe(
                 "algorithms_used": quantum_safe_seal['metadata']['algorithms_used'],
                 "sealed_at": walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat()),
                 "walacor_envelope": walacor_result.get("envelope_metadata", {}),
-                "blockchain_proof": walacor_result.get("blockchain_proof", {})
+                "blockchain_proof": walacor_result.get("blockchain_proof", {}),
+                "canonical_document": canonical_document_str
             },
             borrower_info=encrypted_borrower_data
         )
+
+        signature_jwt = sign_artifact(artifact_id, comprehensive_document)
+        services["db"].update_artifact_signature(artifact_id, signature_jwt)
         
         logger.info(f"✅ Loan document sealed with QUANTUM-SAFE cryptography: {artifact_id}")
         
@@ -5141,7 +5362,8 @@ async def seal_loan_document_quantum_safe(
                 },
                 "hash": primary_hash,
                 "sealed_at": walacor_result.get("sealed_timestamp", datetime.now(timezone.utc).isoformat()),
-                "blockchain_proof": walacor_result.get("blockchain_proof", {})
+                "blockchain_proof": walacor_result.get("blockchain_proof", {}),
+                "signature_jwt": signature_jwt
             }
         )
         

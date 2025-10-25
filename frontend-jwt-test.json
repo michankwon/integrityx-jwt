@@ -1,0 +1,21 @@
+{
+  "loanId": "FRONTEND-JWT-TEST-001",
+  "documentType": "loan_application",
+  "loanAmount": "150000",
+  "borrowerName": "Frontend JWT Test User",
+  "additionalNotes": "Testing JWT digital signature functionality through frontend workflow",
+  "borrowerFullName": "Frontend JWT Test User",
+  "borrowerDateOfBirth": "1990-01-15",
+  "borrowerEmail": "frontend.test@example.com",
+  "borrowerPhone": "555-123-4567",
+  "borrowerStreetAddress": "123 Frontend Test St",
+  "borrowerCity": "TestCity",
+  "borrowerState": "CA",
+  "borrowerZipCode": "90210",
+  "borrowerCountry": "US",
+  "borrowerSSNLast4": "1234",
+  "borrowerGovernmentIdType": "drivers_license",
+  "borrowerIdNumberLast4": "5678",
+  "borrowerEmploymentStatus": "employed",
+  "borrowerAnnualIncome": "75000"
+}

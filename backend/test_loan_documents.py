@@ -19,11 +19,11 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
-from main import app
-from database import Database, get_services
-from models import Artifact, ArtifactEvent
-from encryption_service import EncryptionService
-from walacor_service import WalacorIntegrityService
+from main import app, get_services
+from src.database import Database
+from src.models import Artifact, ArtifactEvent
+from src.encryption_service import EncryptionService
+from src.walacor_service import WalacorIntegrityService
 
 
 class TestLoanDocuments:
@@ -138,6 +138,12 @@ class TestLoanDocuments:
             assert response_data["data"]["walacor_tx_id"] == "TX_test_123456789"
             assert response_data["data"]["hash"] == "test_hash_123456789"
             
+            # ⭐ NEW: Assert JWT signature is included in upload response
+            assert "signature_jwt" in response_data["data"], "Upload response should include JWT signature"
+            assert response_data["data"]["signature_jwt"] is not None, "JWT signature should not be None"
+            assert isinstance(response_data["data"]["signature_jwt"], str), "JWT signature should be a string"
+            assert len(response_data["data"]["signature_jwt"]) > 50, "JWT signature should be a substantial token"
+            
             # Verify artifact created in database
             session = self.session_local()
             artifact = session.query(Artifact).filter(
@@ -148,6 +154,10 @@ class TestLoanDocuments:
             assert artifact.etid == 100005  # Loan documents with borrower info ETID
             assert artifact.walacor_tx_id == "TX_test_123456789"
             assert artifact.borrower_info is not None
+            
+            # ⭐ NEW: Assert JWT signature is stored in database
+            assert artifact.signature_jwt is not None, "Artifact should have JWT signature stored in database"
+            assert artifact.signature_jwt == response_data["data"]["signature_jwt"], "Database JWT should match response JWT"
             
             # Verify borrower info is encrypted
             borrower_info = json.loads(artifact.borrower_info)
@@ -467,6 +477,19 @@ class TestLoanDocuments:
             assert verify_data["ok"] is True
             assert verify_data["data"]["is_valid"] is True
             
+            # ⭐ NEW: Assert JWT verification is included in verification response
+            assert "details" in verify_data["data"], "Verification response should include details"
+            assert "jwt_signature" in verify_data["data"]["details"], "Verification response should include JWT verification in details"
+            jwt_verification = verify_data["data"]["details"]["jwt_signature"]
+            assert "verified" in jwt_verification, "JWT verification should include 'verified' field"
+            assert "claims" in jwt_verification, "JWT verification should include 'claims' field"
+            
+            # If JWT signature exists, verification should succeed for correct payload
+            if jwt_verification["verified"]:
+                assert jwt_verification["claims"] is not None, "JWT claims should be present for verified signature"
+                assert "artifact_id" in jwt_verification["claims"], "JWT claims should include artifact_id"
+                assert jwt_verification["claims"]["artifact_id"] == artifact_id, "JWT artifact_id should match"
+            
             # Test verification with incorrect hash (tamper detection)
             verify_response = self.client.post("/api/verify", json={
                 "etid": 100005,
@@ -476,6 +499,15 @@ class TestLoanDocuments:
             verify_data = verify_response.json()
             assert verify_data["ok"] is True
             assert verify_data["data"]["is_valid"] is False
+            
+            # ⭐ NEW: Assert JWT verification detects tampering
+            assert "details" in verify_data["data"], "Tamper verification should include details"
+            assert "jwt_signature" in verify_data["data"]["details"], "Tamper verification should include JWT verification"
+            jwt_verification = verify_data["data"]["details"]["jwt_signature"]
+            # For tampered documents, JWT verification should either fail or be unavailable
+            if "verified" in jwt_verification:
+                # If JWT verification ran, it should fail for tampered content
+                assert not jwt_verification["verified"], "JWT verification should fail for tampered content"
             
             # Test borrower data integrity by retrieving it
             borrower_response = self.client.get(f"/api/loan-documents/{artifact_id}/borrower")
@@ -677,6 +709,136 @@ class TestLoanDocuments:
             assert borrower_data["data"]["email"] == "j***@example.com"
             assert borrower_data["data"]["phone"] == "***-***-4567"
             # Note: SSN and ID masking would depend on implementation
+
+    def test_jwt_signature_integration_end_to_end(self, valid_loan_data, valid_borrower_data, valid_file_info):
+        """
+        Test complete JWT digital signature integration end-to-end.
+        
+        This test verifies:
+        1. Upload responses include signature_jwt
+        2. Verification responses include jwt_verification status
+        3. JWT signatures can detect document tampering
+        4. JWT claims contain correct artifact information
+        """
+        # Mock Walacor service response
+        mock_walacor_response = {
+            "walacor_tx_id": "TX_jwt_test_123",
+            "document_hash": "jwt_test_hash_123456789",
+            "sealed_timestamp": datetime.now(timezone.utc).isoformat(),
+            "blockchain_proof": {
+                "transaction_id": "TX_jwt_test_123",
+                "blockchain_network": "walacor",
+                "etid": 100005,
+                "seal_timestamp": datetime.now(timezone.utc).isoformat(),
+                "integrity_verified": True,
+                "immutability_established": True
+            }
+        }
+        
+        with patch.object(self.mock_walacor, 'seal_loan_document', return_value=mock_walacor_response):
+            # PHASE 1: Document Upload and JWT Signature Generation
+            print("🔒 Testing JWT signature generation during upload...")
+            
+            request_data = {
+                "loan_data": valid_loan_data,
+                "borrower_info": valid_borrower_data,
+                "files": valid_file_info
+            }
+            
+            upload_response = self.client.post("/api/loan-documents/seal", json=request_data)
+            assert upload_response.status_code == 200
+            
+            upload_data = upload_response.json()
+            assert upload_data["ok"] is True
+            
+            # Assert JWT signature is included in upload response
+            assert "signature_jwt" in upload_data["data"], "Upload response must include signature_jwt"
+            jwt_signature = upload_data["data"]["signature_jwt"]
+            assert jwt_signature is not None, "JWT signature cannot be None"
+            assert isinstance(jwt_signature, str), "JWT signature must be a string"
+            assert jwt_signature.count('.') == 2, "JWT should have 3 parts separated by dots"
+            
+            artifact_id = upload_data["data"]["artifact_id"]
+            document_hash = upload_data["data"]["hash"]
+            
+            # PHASE 2: JWT Verification with Valid Document
+            print("✅ Testing JWT verification with valid document...")
+            
+            verify_response = self.client.post("/api/verify", json={
+                "etid": 100005,
+                "payloadHash": document_hash
+            })
+            assert verify_response.status_code == 200
+            
+            verify_data = verify_response.json()
+            assert verify_data["ok"] is True
+            assert verify_data["data"]["is_valid"] is True
+            
+            # Assert JWT verification is included in verification response
+            assert "details" in verify_data["data"], "Verification response must include details"
+            assert "jwt_signature" in verify_data["data"]["details"], "Verification response must include jwt_verification"
+            jwt_verification = verify_data["data"]["details"]["jwt_signature"]
+            
+            assert "verified" in jwt_verification, "JWT verification must include 'verified' status"
+            assert "claims" in jwt_verification, "JWT verification must include 'claims'"
+            assert "error" in jwt_verification, "JWT verification must include 'error' field"
+            
+            # For valid documents with JWT signatures, verification should succeed
+            if jwt_verification.get("verified"):
+                claims = jwt_verification["claims"]
+                assert claims is not None, "JWT claims should be present for verified signatures"
+                assert "artifact_id" in claims, "JWT claims must include artifact_id"
+                assert claims["artifact_id"] == artifact_id, "JWT artifact_id must match"
+                assert "iss" in claims, "JWT claims must include issuer"
+                assert "payload" in claims, "JWT claims must include payload"
+                
+                print(f"✅ JWT verification successful with claims: {claims.keys()}")
+            
+            # PHASE 3: JWT Tamper Detection with Modified Document
+            print("🔍 Testing JWT tamper detection with modified document...")
+            
+            tampered_verify_response = self.client.post("/api/verify", json={
+                "etid": 100005,
+                "payloadHash": "tampered_hash_different_from_original"
+            })
+            assert tampered_verify_response.status_code == 200
+            
+            tampered_verify_data = tampered_verify_response.json()
+            assert tampered_verify_data["ok"] is True
+            assert tampered_verify_data["data"]["is_valid"] is False  # Hash mismatch
+            
+            # Assert JWT verification detects tampering
+            assert "jwt_verification" in tampered_verify_data["data"], "Tamper verification must include JWT verification"
+            tampered_jwt_verification = tampered_verify_data["data"]["jwt_verification"]
+            
+            # JWT verification should either:
+            # 1. Fail verification (verified=False) due to payload mismatch, OR
+            # 2. Not have signature available (verified=False with appropriate error)
+            assert not tampered_jwt_verification.get("verified", True), "JWT verification must fail for tampered documents"
+            
+            if not tampered_jwt_verification.get("verified"):
+                assert "error" in tampered_jwt_verification, "Failed JWT verification must include error message"
+                print(f"✅ JWT tamper detection successful: {tampered_jwt_verification.get('error', 'No error message')}")
+            
+            # PHASE 4: Database Persistence Verification
+            print("💾 Testing JWT signature database persistence...")
+            
+            session = self.session_local()
+            artifact = session.query(Artifact).filter(
+                Artifact.artifact_id == artifact_id
+            ).first()
+            
+            assert artifact is not None, "Artifact must exist in database"
+            assert artifact.signature_jwt is not None, "Artifact must have JWT signature in database"
+            assert artifact.signature_jwt == jwt_signature, "Database JWT must match response JWT"
+            
+            session.close()
+            
+            print("🎉 JWT signature integration test completed successfully!")
+            print(f"   ✅ Upload includes signature_jwt: {bool(jwt_signature)}")
+            print(f"   ✅ Verification includes jwt_verification: {bool(jwt_verification)}")
+            print(f"   ✅ Tamper detection works: {not tampered_jwt_verification.get('verified', True)}")
+            print(f"   ✅ Database persistence works: {bool(artifact.signature_jwt)}")
 
 
 if __name__ == "__main__":

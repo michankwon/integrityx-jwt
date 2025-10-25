@@ -7,13 +7,14 @@
 3. [File Structure & Components](#file-structure--components)
 4. [Implementation Flow](#implementation-flow)
 5. [Security Features](#security-features)
-6. [API Endpoints](#api-endpoints)
-7. [Database Schema](#database-schema)
-8. [Frontend Components](#frontend-components)
-9. [Quantum-Safe Implementation](#quantum-safe-implementation)
-10. [Testing & Validation](#testing--validation)
-11. [Deployment Guide](#deployment-guide)
-12. [Troubleshooting](#troubleshooting)
+6. [JWT Digital Signatures](#jwt-digital-signatures)
+7. [API Endpoints](#api-endpoints)
+8. [Database Schema](#database-schema)
+9. [Frontend Components](#frontend-components)
+10. [Quantum-Safe Implementation](#quantum-safe-implementation)
+11. [Testing & Validation](#testing--validation)
+12. [Deployment Guide](#deployment-guide)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -24,6 +25,7 @@
 ### Key Features
 
 - **🔐 Quantum-Safe Cryptography**: SHAKE256, BLAKE3, SHA3-512 hashing + Dilithium signatures
+- **✍️ JWT Digital Signatures**: RS256 cryptographic signatures for document authenticity
 - **⛓️ Blockchain Integration**: Real Walacor blockchain for immutable document sealing
 - **📄 Multi-Format Support**: PDF, JSON, TXT, images, Office documents
 - **🛡️ Advanced Security**: Multi-algorithm hashing, PKI signatures, tamper detection
@@ -370,6 +372,13 @@ graph TD
 - ECDSA signatures
 - Ed25519 signatures
 
+**JWT Digital Signatures:**
+- RS256 algorithm (RSA with SHA-256)
+- 2048-bit RSA key pairs
+- Canonical JSON payload representation
+- 1-hour token expiration
+- Tamper-proof document verification
+
 **Field-Level Encryption:**
 - Fernet symmetric encryption
 - AES-256 encryption
@@ -389,6 +398,61 @@ graph TD
 - Predictive analytics
 - Document intelligence
 - Time-based verification
+
+### 4. JWT Digital Signatures
+
+**Overview:**
+IntegrityX implements JWT (JSON Web Token) digital signatures to provide cryptographic proof of document authenticity and enable tamper detection. The system uses industry-standard RS256 algorithm with RSA-2048 keys for robust security.
+
+**Technical Specifications:**
+- **Algorithm**: RS256 (RSA Signature with SHA-256)
+- **Key Size**: 2048-bit RSA key pairs
+- **Token Expiration**: 1 hour (configurable)
+- **Issuer**: Configurable (default: "integrityx")
+- **Payload Format**: Canonical JSON representation
+
+**Implementation Details:**
+
+```python
+# JWT Service Structure
+class JWTService:
+    def sign_artifact(artifact_id: str, payload: dict) -> str
+    def verify_signature(token: str, payload: dict) -> dict
+    def canonical_json(data: dict) -> str
+```
+
+**Environment Configuration:**
+```env
+# Required JWT Configuration
+JWT_PRIVATE_KEY_PATH=keys/jwt_private_key.pem
+JWT_PUBLIC_KEY_PATH=keys/jwt_public_key.pem
+JWT_ISSUER=integrityx
+```
+
+**Key Management:**
+- **Generation**: Use `generate_jwt_keys.py` script to create RSA key pairs
+- **Storage**: Store keys securely with restricted file system permissions
+- **Rotation**: Implement periodic key rotation (recommended: annually)
+- **Backup**: Maintain secure backups of both public and private keys
+
+**Security Considerations:**
+- Private keys must be secured with appropriate file permissions (600)
+- Keys should be stored outside the web server document root
+- Implement proper key rotation procedures
+- Monitor for key compromise and have revocation procedures
+- Use hardware security modules (HSMs) for production environments
+
+**Operational Workflow:**
+1. Document is sealed via `/api/seal` endpoint
+2. System automatically generates JWT signature for the document
+3. Signature is stored in database (`signature_jwt` column)
+4. During verification, signature is checked for tampering
+5. Any modification to the original document invalidates the signature
+
+**API Integration:**
+- **Sealing**: All document sealing operations automatically include JWT signatures
+- **Verification**: Document verification includes JWT validation status
+- **Response Format**: JWT data included in `signature_jwt` field for sealing, `details.jwt_signature` for verification
 
 ---
 
@@ -427,6 +491,16 @@ graph TD
   - Basic digital signatures
   - Blockchain sealing
 
+**POST `/api/seal`**
+- **Purpose**: Document sealing with JWT signature generation
+- **Request Body**: `SealRequest` (payloadHash, etid)
+- **Response**: `StandardResponse` with blockchain transaction details
+- **Features**:
+  - JSON document sealing
+  - Automatic JWT signature generation
+  - Blockchain transaction creation
+  - Response includes `details.signature_jwt` with signed JWT token
+
 #### 2. Document Verification
 
 **GET `/api/loan-documents/{artifact_id}/verify-maximum-security`**
@@ -438,14 +512,16 @@ graph TD
   - Advanced tamper detection
   - Security report generation
 
-**GET `/api/verify`**
-- **Purpose**: Standard document verification
-- **Query Parameters**: `hash` (document hash)
-- **Response**: `StandardResponse` with verification results
+**POST `/api/verify`**
+- **Purpose**: Document verification with JWT signature validation
+- **Request Body**: `VerifyRequest` (etid, payloadHash)
+- **Response**: `StandardResponse` with verification results and JWT status
 - **Features**:
   - Hash comparison
+  - JWT signature verification
   - Blockchain verification
-  - Basic integrity check
+  - Tamper detection
+  - Response includes `details.jwt_signature` with verification status
 
 #### 3. Borrower Information
 

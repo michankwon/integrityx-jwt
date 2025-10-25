@@ -1,15 +1,20 @@
-# 🔒 IntegrityX - Financial Document Integrity System
+# � IntegrityX - JWT Digital Signature Platform
 
-A comprehensive financial document integrity system that uses cryptographic hashing and blockchain technology to detect tampering and maintain complete audit trails.
+**Complete JWT Digital Signature Implementation** - A production-ready blockchain document platform with enterprise-grade cryptographic signatures.
+
+## ✨ **What's New: Full JWT Implementation**
+
+This repository contains a **complete JWT digital signature system** that automatically signs and verifies documents with RS256 cryptographic security.
 
 ## 🚀 Features
 
-- **📤 Document Upload**: Secure document storage with cryptographic hashing
-- **🔍 Integrity Verification**: Tampering detection using hash comparison
-- **✍️ Digital Signatures**: JWT-based document signing for cryptographic proof of authenticity
+- **🔐 JWT Digital Signatures**: RS256 algorithm with 2048-bit RSA keys for automatic document signing
+- **📤 Document Upload**: Secure document storage with cryptographic hashing and JWT signatures
+- **🔍 Integrity Verification**: Dual-layer security with both blockchain and JWT signature verification
+- **✍️ Cryptographic Proof**: JWT-based document signing for tamper detection and authenticity
 - **🔗 Provenance Tracking**: Complete document lineage and relationship tracking
 - **⏰ Time Machine**: View document states at any past timestamp
-- **📊 Audit Trails**: Comprehensive logging and compliance reporting
+- **📊 Audit Trails**: Comprehensive logging and compliance reporting with JWT verification logs
 
 ## 🛠️ Installation
 
